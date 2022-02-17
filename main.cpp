@@ -26,6 +26,17 @@ private:
 	GLFWwindow* window;
 	VkInstance instance;
 
+    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT messageType,
+        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+        void* pUserData
+    ) {
+        std::cerr << "Validation layer: " << pCallbackData->pMessage << '\n';
+
+        return VK_FALSE;
+    }
+
     std::vector<const char*> getRequiredExtensions() {
         uint32_t glfwExtensionsCount = 0;
         const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionsCount);
