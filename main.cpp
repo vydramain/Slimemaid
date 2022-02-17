@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
 #include <cstdio>
 #include <vector>
 
@@ -25,7 +26,36 @@ private:
 	GLFWwindow* window;
 	VkInstance instance;
 
+    bool checkValidationLayerSupport() {
+        uint32_t layerCount;
+        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+        std::vector<VkLayerProperties> availableLayers(layerCount);
+        vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+        std::cout << "Validation layer support found next layers:" << '\n';
+        for (const char* layerName : validationLayers) {
+            bool layerFound = false;
+            for (const auto& layerProperties : availableLayers) {
+                std::cout << "\t" << layerName << '\n';
+                if (strcmp(layerName, layerProperties.layerName) == 0) {
+                    layerFound = true;
+                    break;
+                }
+            }
+            if (!layerFound) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     void createInstance() {
+        if (enableValidationLayers && !checkValidationLayerSupport()) {
+            throw std::runtime_error("Validation layers requested, but not avaliable!");
+        }
+
         VkApplicationInfo appInfo{};
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         appInfo.pApplicationName = "Slimemaid";
