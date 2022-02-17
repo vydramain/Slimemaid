@@ -26,6 +26,19 @@ private:
 	GLFWwindow* window;
 	VkInstance instance;
 
+    std::vector<const char*> getRequiredExtensions() {
+        uint32_t glfwExtensionsCount = 0;
+        const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionsCount);
+
+        std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionsCount);
+
+        if(enableValidationLayers) {
+            extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        }
+
+        return extensions;
+    }
+
     bool checkValidationLayerSupport() {
         uint32_t layerCount;
         vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -68,12 +81,9 @@ private:
         instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         instanceCreateInfo.pApplicationInfo = &appInfo;
 
-        uint32_t glfwExtensionCount = 0;
-        const char** glfwExtensions;
-        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-        instanceCreateInfo.enabledExtensionCount = glfwExtensionCount;
-        instanceCreateInfo.ppEnabledExtensionNames = glfwExtensions;
+        auto glfwExtensions = getRequiredExtensions();
+        instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(glfwExtensions.size());
+        instanceCreateInfo.ppEnabledExtensionNames = glfwExtensions.data();
 
         if(enableValidationLayers) {
             instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
