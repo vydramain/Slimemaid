@@ -74,7 +74,13 @@ private:
 
         instanceCreateInfo.enabledExtensionCount = glfwExtensionCount;
         instanceCreateInfo.ppEnabledExtensionNames = glfwExtensions;
-        instanceCreateInfo.enabledLayerCount = 0;
+
+        if(enableValidationLayers) {
+            instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+            instanceCreateInfo.ppEnabledLayerNames = validationLayers.data();
+        } else {
+            instanceCreateInfo.enabledLayerCount = 0;
+        }
 
         if (vkCreateInstance(&instanceCreateInfo, nullptr, &instance) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create Vulkan instance!");
