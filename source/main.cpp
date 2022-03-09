@@ -38,6 +38,7 @@ private:
     VkDebugUtilsMessengerEXT debugMessenger;
     VkPhysicalDevice physicalDevice;
     VkDevice device;
+    VkQueue graphicsQueue;
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -90,7 +91,7 @@ private:
 
     void createInstance() {
         if (enableValidationLayers && !checkValidationLayerSupport()) {
-            throw std::runtime_error("Validation layers requested, but not avaliable!");
+            throw std::runtime_error("Validation layers requested, but not avaliable");
         }
 
         VkApplicationInfo appInfo{};
@@ -122,7 +123,7 @@ private:
         }
 
         if (vkCreateInstance(&instanceCreateInfo, nullptr, &instance) != VK_SUCCESS) {
-            throw std::runtime_error("Failed to create Vulkan instance!");
+            throw std::runtime_error("Failed to create Vulkan instance");
         } else {
             std::cout << "Vulkan instance creation process ends with success..." << std::endl;
         }
@@ -246,7 +247,7 @@ private:
         fillDebugMessengerCreateInfoEXT(createInfo);
 
         if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
-            throw std::runtime_error("failed to set up debug messenger!");
+            throw std::runtime_error("Failed to set up debug messenger");
         }
     }
 
@@ -286,10 +287,32 @@ private:
 
         float queuePriority = 1.0f;
         VkDeviceQueueCreateInfo queueCreateInfo{};
-        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
         queueCreateInfo.queueCount = 1;
         queueCreateInfo.pQueuePriorities = &queuePriority;
+
+        VkPhysicalDeviceFeatures deviceFeatures{};
+
+        VkDeviceCreateInfo deviceCreateInfo{};
+        deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
+        deviceCreateInfo.queueCreateInfoCount = 1;
+        deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
+        deviceCreateInfo.enabledExtensionCount = 0;
+
+        if (enableValidationLayers) {
+            deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+            deviceCreateInfo.ppEnabledLayerNames = validationLayers.data();
+        } else {
+            deviceCreateInfo.enabledLayerCount = 0;
+        }
+
+        if (vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device) != VK_SUCCESS) {
+            throw std::runtime_error("Failed to create logical device");
+        }
+
+        vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
     }
 
 	void mainLoop() {
@@ -299,6 +322,8 @@ private:
 	}
 
 	void cleanUp() {
+        vkDestroyDevice(device, nullptr);
+
         if (enableValidationLayers) {
             DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
         }
