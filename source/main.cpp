@@ -39,6 +39,7 @@ private:
     VkPhysicalDevice physicalDevice;
     VkDevice device;
     VkQueue graphicsQueue;
+    VkSurfaceKHR surface;
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -150,6 +151,7 @@ private:
 	void initVulkan() {
 		createInstance();
         setupDebugMessenger();
+        createSurface();
         pickPhisicalDevice();
         createLogicalDevice();
 	}
@@ -315,6 +317,12 @@ private:
         vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
     }
 
+    void createSurface() {
+        if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
+            throw std::runtime_error("Failed to create window surface");
+        }
+    }
+
 	void mainLoop() {
 		while (!glfwWindowShouldClose(window)) {
 			glfwPollEvents();
@@ -328,6 +336,7 @@ private:
             DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
         }
 
+        vkDestroySurfaceKHR(instance, surface, nullptr);
         vkDestroyInstance(instance, nullptr);
 		glfwDestroyWindow(window);
 		glfwTerminate();
