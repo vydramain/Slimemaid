@@ -36,6 +36,8 @@ private:
 	GLFWwindow* window;
 	VkInstance instance;
     VkDebugUtilsMessengerEXT debugMessenger;
+    VkPhysicalDevice physicalDevice;
+    VkDevice device;
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -147,6 +149,8 @@ private:
 	void initVulkan() {
 		createInstance();
         setupDebugMessenger();
+        pickPhisicalDevice();
+        createLogicalDevice();
 	}
 
     int rateDeviceSuitability(VkPhysicalDevice device) {
@@ -175,8 +179,6 @@ private:
     }
 
     void pickPhisicalDevice() {
-        VkPhysicalDevice physicalDevice;
-
         uint32_t deviceCount = 0;
         vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
@@ -277,6 +279,17 @@ private:
         QueueFamilyIndices indices = findQueueFamilies(device);
 
         return indices.graphicsFamily.has_value();
+    }
+
+    void createLogicalDevice() {
+        QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+
+        float queuePriority = 1.0f;
+        VkDeviceQueueCreateInfo queueCreateInfo{};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
     }
 
 	void mainLoop() {
