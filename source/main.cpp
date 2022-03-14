@@ -33,6 +33,12 @@ struct QueueFamilyIndices {
     }
 };
 
+struct SwapChainSupportDetails {
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> presentModes;
+};
+
 class HelloTriangleApplication {
 private:
     const std::vector<const char*> deviceExtensions = {
@@ -65,7 +71,7 @@ private:
 
         std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionsCount);
 
-        if(enableValidationLayers) {
+        if (enableValidationLayers) {
             extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         }
 
@@ -82,7 +88,7 @@ private:
         for (const char* layerName : validationLayers) {
             bool layerFound = false;
             for (const auto& layerProperties : availableLayers) {
-                if (strcmp(layerName, layerProperties.layerName) == 0) {
+                if (0 == strcmp(layerName, layerProperties.layerName)) {
                     layerFound = true;
                     break;
                 }
@@ -117,7 +123,7 @@ private:
         instanceCreateInfo.ppEnabledExtensionNames = glfwExtensions.data();
 
         VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
-        if(enableValidationLayers) {
+        if (enableValidationLayers) {
             instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
             instanceCreateInfo.ppEnabledLayerNames = validationLayers.data();
 
@@ -128,7 +134,7 @@ private:
             instanceCreateInfo.pNext = nullptr;
         }
 
-        if (vkCreateInstance(&instanceCreateInfo, nullptr, &instance) != VK_SUCCESS) {
+        if (VK_SUCCESS != vkCreateInstance(&instanceCreateInfo, nullptr, &instance)) {
             throw std::runtime_error("Failed to create Vulkan instance");
         } else {
             std::cout << "Vulkan instance creation process ends with success..." << std::endl;
@@ -166,7 +172,7 @@ private:
         int score = 0;
 
         // Discrete GPUs have a significant performance advantage
-        if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+        if (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == deviceProperties.deviceType) {
             score += 1000;
         }
 
@@ -201,7 +207,7 @@ private:
         }
 
         // Check if the best candidate is suitable at all
-        if (candidates.rbegin()->first > 0) {
+        if (0 < candidates.rbegin()->first) {
             physicalDevice = candidates.rbegin()->second;
         } else {
             throw std::runtime_error("No suitable GPU found");
@@ -215,7 +221,7 @@ private:
         VkDebugUtilsMessengerEXT* pDebugMessenger
     ) {
         auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-        if (func != nullptr) {
+        if (nullptr != func) {
             return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
         } else {
             return VK_ERROR_EXTENSION_NOT_PRESENT;
@@ -228,7 +234,7 @@ private:
         const VkAllocationCallbacks* pAllocator
     ) {
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
-        if (func != nullptr) {
+        if (nullptr != func) {
             func(instance, debugMessenger, pAllocator);
         }
     }
@@ -248,7 +254,7 @@ private:
         VkDebugUtilsMessengerCreateInfoEXT createInfo;
         fillDebugMessengerCreateInfoEXT(createInfo);
 
-        if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+        if (VK_SUCCESS != CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger)) {
             throw std::runtime_error("Failed to set up debug messenger");
         }
     }
@@ -282,6 +288,28 @@ private:
         return indices;
     }
 
+    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) {
+        SwapChainSupportDetails details;
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+
+        uint32_t formatCount;
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
+        if (0 != formatCount) {
+            details.formats.resize(formatCount);
+            vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
+        }
+
+        uint32_t presentModeCount;
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
+
+        if (0 != presentModeCount) {
+            details.presentModes.resize(presentModeCount);
+            vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
+        }
+
+        return details;
+    }
+
     bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
         uint32_t extensionCount;
         vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
@@ -300,8 +328,14 @@ private:
     bool isDeviceSuitable(VkPhysicalDevice device) {
         QueueFamilyIndices indices = findQueueFamilies(device);
         bool extensionsSupported = checkDeviceExtensionSupport(device);
+        bool swapChainAdequate = false;
 
-        return indices.graphicsFamily.has_value() && extensionsSupported;
+        if (extensionsSupported) {
+            SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
+            swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+        }
+
+        return indices.graphicsFamily.has_value() && extensionsSupported && swapChainAdequate;
     }
 
     void createLogicalDevice() {
@@ -338,7 +372,7 @@ private:
             deviceCreateInfo.enabledLayerCount = 0;
         }
 
-        if (vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device) != VK_SUCCESS) {
+        if (VK_SUCCESS != vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device)) {
             throw std::runtime_error("Failed to create logical device");
         }
 
@@ -347,7 +381,7 @@ private:
     }
 
     void createSurface() {
-        if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
+        if (VK_SUCCESS != glfwCreateWindowSurface(instance, window, nullptr, &surface)) {
             throw std::runtime_error("Failed to create window surface");
         }
     }
