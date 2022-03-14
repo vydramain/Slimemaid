@@ -310,7 +310,7 @@ private:
         return details;
     }
 
-    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
+    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
         for (const auto& availableFormat : availableFormats) {
             if (VK_FORMAT_B8G8R8A8_SRGB == availableFormat.format &&
                 VK_COLORSPACE_SRGB_NONLINEAR_KHR == availableFormat.colorSpace) {
@@ -318,6 +318,16 @@ private:
                 }
         }
         return availableFormats[0];
+    }
+
+    VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
+        for (const auto& availablePresentMode : availablePresentModes) {
+            if(VK_PRESENT_MODE_MAILBOX_KHR == availablePresentMode) {
+                return availablePresentMode;
+            }
+        }
+
+        return VK_PRESENT_MODE_FIFO_KHR;
     }
 
     bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
