@@ -310,6 +310,16 @@ private:
         return details;
     }
 
+    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
+        for (const auto& availableFormat : availableFormats) {
+            if (VK_FORMAT_B8G8R8A8_SRGB == availableFormat.format &&
+                VK_COLORSPACE_SRGB_NONLINEAR_KHR == availableFormat.colorSpace) {
+                    return availableFormat;
+                }
+        }
+        return availableFormats[0];
+    }
+
     bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
         uint32_t extensionCount;
         vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
