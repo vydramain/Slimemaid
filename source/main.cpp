@@ -1,6 +1,9 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include <algorithm> // Necessary for std::clamp
+#include <cstdint> // Necessary for uint32_t
+#include <limits> // Necessary for std::numeric_limits
 #include <stdexcept>
 #include <optional>
 #include <iostream>
@@ -328,6 +331,29 @@ private:
         }
 
         return VK_PRESENT_MODE_FIFO_KHR;
+    }
+
+    VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) {
+        if (std::numeric_limits<uint32_t>::max() != capabilities.currentExtent.width) {
+            return capabilities.currentExtent;
+        } else {
+            int height;
+            int width;
+            glfwGetFramebufferSize(window, &height, &width);
+
+            VkExtent2D actualExtent = {
+                static_cast<uint32_t>(height),
+                static_cast<uint32_t>(width)
+            };
+
+            actualExtent.width =
+                std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+            actualExtent.height =
+                std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+
+            return actualExtent;
+        }
+
     }
 
     bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
