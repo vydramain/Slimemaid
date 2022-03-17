@@ -50,13 +50,18 @@ private:
 
     VkDebugUtilsMessengerEXT debugMessenger;
     VkPhysicalDevice physicalDevice;
+    VkFormat swapChainImageFormat;
+    VkExtent2D swapChainExtent;
+    VkSwapchainKHR swapChain;
     VkQueue graphicsQueue;
     VkQueue presentQueue;
     VkSurfaceKHR surface;
     VkInstance instance;
     GLFWwindow* window;
     VkDevice device;
-    VkSwapchainKHR swapChain;
+
+
+    std::vector<VkImage> swapChainImages;
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -172,7 +177,7 @@ private:
 
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
         VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
-        VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
+        VkExtent2D swapChainExtent = chooseSwapExtent(swapChainSupport.capabilities);
 
         uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
         if (swapChainSupport.capabilities.maxImageCount > 0 &&
@@ -186,7 +191,7 @@ private:
         createInfo.minImageCount = imageCount;
         createInfo.imageFormat = surfaceFormat.format;
         createInfo.imageColorSpace = surfaceFormat.colorSpace;
-        createInfo.imageExtent = extent;
+        createInfo.imageExtent = swapChainExtent;
         createInfo.imageArrayLayers = 1;
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
@@ -212,6 +217,13 @@ private:
         if (VK_SUCCESS != vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain)) {
            throw std::runtime_error("Failed to create swap chain");
        }
+
+       vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+       swapChainImages.resize(imageCount);
+       vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+
+       swapChainImageFormat = surfaceFormat.format;
+       swapChainExtent = swapChainExtent;
     }
 
     int rateDeviceSuitability(VkPhysicalDevice device) {
