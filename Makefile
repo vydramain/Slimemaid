@@ -1,13 +1,15 @@
 CFLAGS = -std=c++17 -O2
 LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lXrandr -lXi
-build: ./source/main.cpp
-	g++ $(CFLAGS) -o Slimemaid ./source/main.cpp $(LDFLAGS) -g
+build:	clean ./source/main.cpp
+	mkdir -p build
+	./compile_shaders.sh
+	g++ $(CFLAGS) -o ./build/Slimemaid ./source/main.cpp $(LDFLAGS) -g
 
 .PHONY: test clean
 
 test:	build
 	clear
-	./Slimemaid
+	./build/Slimemaid
 
 clean:
-	rm -rf Slimemaid
+	rm -rf ./build

@@ -171,7 +171,12 @@ private:
         createLogicalDevice();
         createSwapChain();
         createImageViews();
+        createGraphicsPipeline();
 	}
+
+    void createGraphicsPipeline() {
+        
+    }
 
     void createImageViews() {
         swapChainImageViews.resize(swapChainImages.size());
@@ -529,7 +534,7 @@ private:
         for (auto imageView : swapChainImageViews) {
             vkDestroyImageView(device, imageView, nullptr);
         }
-        
+
         vkDestroySwapchainKHR(device, swapChain, nullptr);
         vkDestroyDevice(device, nullptr);
 
