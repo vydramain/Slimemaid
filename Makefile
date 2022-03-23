@@ -13,5 +13,6 @@ build:	clean compile_shaders ./source/main.cpp
 .PHONY: clean compile_shaders test
 
 test:	build
+	cd ./build
 	clear
-	./build/Slimemaid
+	./Slimemaid

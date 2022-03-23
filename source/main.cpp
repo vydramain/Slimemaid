@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <optional>
 #include <iostream>
+#include <fstream>
 #include <cstdint> // Necessary for uint32_t
 #include <cstdlib>
 #include <cstring>
@@ -72,6 +73,22 @@ private:
         std::cerr << pCallbackData->pMessage << '\n';
 
         return VK_FALSE;
+    }
+
+    static std::vector<char> readFile(const std::string& filename) {
+        std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+        if(!file.is_open()) {
+            throw std::runtime_error("Failed to open file: " + filename);
+        }
+
+        size_t fileSize = (size_t)file.tellg();
+        std::vector<char> buffer(fileSize);
+
+        file.seekg(0);
+        file.read(buffer.data(), fileSize);
+        file.close();
+        return buffer;
     }
 
     std::vector<const char*> getRequiredExtensions() {
@@ -175,7 +192,8 @@ private:
 	}
 
     void createGraphicsPipeline() {
-        
+        auto vertShaderCode = readFile("./shaders/vert.spv");
+        auto fragShaderCode = readFile("./shaders/frag.spv");
     }
 
     void createImageViews() {
