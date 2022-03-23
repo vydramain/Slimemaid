@@ -84,19 +84,19 @@ But if you don't want to use you should change base SDK location variables.
 After downloading use this command to unpack SDK where `x.x.x.x` is version of current SDK and `arc` is architecture of your system:
 
 ```console
-$ tar -zxvf vulkansdk-linux-**arc**-**x.x.x.x**.tar.gz
+$ tar -zxvf vulkansdk-linux-arc-x.x.x.x.tar.gz
 ```
 
 After that move file to correct location:
 
 ```console
-# mv **x.x.x.x** /opt/vulkansdk/**x.x.x.x**
+# mv x.x.x.x /opt/vulkansdk/x.x.x.x
 ```
 
 And do not forget execute shell file to set up system environment variables:
 
 ```console
-# ch /opt/vulkansdk/**x.x.x.x**
+# ch /opt/vulkansdk/x.x.x.x
 # sudo chmod +x setup-env.sh
 # ./setup-env.sh
 ```
