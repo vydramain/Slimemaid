@@ -194,6 +194,28 @@ private:
     void createGraphicsPipeline() {
         auto vertShaderCode = readFile("./shaders/vert.spv");
         auto fragShaderCode = readFile("./shaders/frag.spv");
+
+        VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
+        VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+
+        VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+        vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+        vertShaderStageInfo.module = vertShaderModule;
+        vertShaderStageInfo.pName = "main"; // entrypoint function name of shader module
+        vertShaderStageInfo.pSpecializationInfo = nullptr; // shader variables at render time for compiler optimizations
+
+        VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+        fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        fragShaderStageInfo.module = fragShaderModule;
+        fragShaderStageInfo.pName = "main";
+        fragShaderStageInfo.pSpecializationInfo = nullptr;
+
+        VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+
+        vkDestroyShaderModule(device, vertShaderModule, nullptr);
+        vkDestroyShaderModule(device, fragShaderModule, nullptr);
     }
 
     void createImageViews() {
@@ -273,6 +295,20 @@ private:
 
        swapChainImageFormat = surfaceFormat.format;
        swapChainExtent = swapChainExtent;
+    }
+
+    VkShaderModule createShaderModule(const std::vector<char>& code) {
+        VkShaderModuleCreateInfo shaderCreateInfo{};
+        shaderCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        shaderCreateInfo.codeSize = code.size();
+        shaderCreateInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+        VkShaderModule shaderModule;
+        if (VK_SUCCESS != vkCreateShaderModule(device, &shaderCreateInfo, nullptr, &shaderModule)) {
+            std::runtime_error("Failed to create shader module");
+        }
+
+        return shaderModule;
     }
 
     int rateDeviceSuitability(VkPhysicalDevice device) {
