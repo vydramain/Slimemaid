@@ -53,6 +53,7 @@ private:
     VkPipelineLayout pipelineLayout;
     VkPhysicalDevice physicalDevice;
     VkFormat swapChainImageFormat;
+    VkPipeline graphicsPipeline;
     VkExtent2D swapChainExtent;
     VkSwapchainKHR swapChain;
     VkRenderPass renderPass;
@@ -72,7 +73,7 @@ private:
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
         void* pUserData
     ) {
-        std::cerr << pCallbackData->pMessage << '\n';
+        // std::cerr << pCallbackData->pMessage << '\n';
 
         return VK_FALSE;
     }
@@ -222,7 +223,7 @@ private:
         renderPassCreateInfo.pSubpasses = &subpassDescription;
 
         if (VK_SUCCESS != vkCreateRenderPass(device, &renderPassCreateInfo, nullptr, &renderPass)) {
-            std::runtime_error("Failed to create render pass");
+            throw std::runtime_error("Failed to create render pass");
         }
     }
 
@@ -344,6 +345,29 @@ private:
             throw std::runtime_error("Failed to create pipeline layout");
         }
 
+        VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
+        pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        pipelineCreateInfo.stageCount = 2;
+        pipelineCreateInfo.pStages = shaderStages;
+        pipelineCreateInfo.pVertexInputState = &vertexInputInfo;
+        pipelineCreateInfo.pInputAssemblyState = &inputAssemblyCreateInfo;
+        pipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
+        pipelineCreateInfo.pRasterizationState = &rasterizationCreateInfo;
+        pipelineCreateInfo.pMultisampleState = &multisampleStateCreateInfo;
+        pipelineCreateInfo.pDepthStencilState = nullptr; // Optional
+        pipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
+        pipelineCreateInfo.pDynamicState = nullptr; // Optional
+        pipelineCreateInfo.layout = pipelineLayout;
+        pipelineCreateInfo.renderPass = renderPass;
+        pipelineCreateInfo.subpass = 0;
+        pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
+        pipelineCreateInfo.basePipelineIndex = -1;
+
+        if (VK_SUCCESS !=
+            vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &graphicsPipeline)) {
+            throw std::runtime_error("Failed to create graphics pipeline");
+        }
+
         vkDestroyShaderModule(device, vertShaderModule, nullptr);
         vkDestroyShaderModule(device, fragShaderModule, nullptr);
     }
@@ -435,7 +459,7 @@ private:
 
         VkShaderModule shaderModule;
         if (VK_SUCCESS != vkCreateShaderModule(device, &shaderCreateInfo, nullptr, &shaderModule)) {
-            std::runtime_error("Failed to create shader module");
+            throw std::runtime_error("Failed to create shader module");
         }
 
         return shaderModule;
@@ -715,6 +739,7 @@ private:
 	}
 
 	void cleanUp() {
+        vkDestroyPipeline(device, graphicsPipeline, nullptr);
         vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
         vkDestroyRenderPass(device, renderPass, nullptr);
 
