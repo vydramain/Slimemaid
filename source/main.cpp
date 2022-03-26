@@ -64,6 +64,7 @@ private:
     GLFWwindow* window;
     VkDevice device;
 
+    std::vector<VkFramebuffer> swapChainFramebuffers;
     std::vector<VkImageView> swapChainImageViews;
     std::vector<VkImage> swapChainImages;
 
@@ -73,7 +74,7 @@ private:
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
         void* pUserData
     ) {
-        // std::cerr << pCallbackData->pMessage << '\n';
+        std::cerr << pCallbackData->pMessage << '\n';
 
         return VK_FALSE;
     }
@@ -193,7 +194,32 @@ private:
         createImageViews();
         createRenderPass();
         createGraphicsPipeline();
+        createFramebuffers();
 	}
+
+    void createFramebuffers() {
+        swapChainFramebuffers.resize(swapChainImageViews.size());
+        for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+            VkImageView attachments[] = {
+                swapChainImageViews[i]
+            };
+
+            VkFramebufferCreateInfo framebufferCreateInfo{};
+            framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            framebufferCreateInfo.renderPass = renderPass;
+            framebufferCreateInfo.attachmentCount = 1;
+            framebufferCreateInfo.pAttachments = attachments;
+            framebufferCreateInfo.width = swapChainExtent.width;
+            framebufferCreateInfo.height = swapChainExtent.height;
+            framebufferCreateInfo.layers = 1;
+
+            if (VK_SUCCESS !=
+                vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &swapChainFramebuffers[i])) {
+                    throw std::runtime_error("Failed to create framebuffer");
+                }
+        }
+        
+    }
 
     void createRenderPass() {
         VkAttachmentDescription colorAttachmentDescription{};
