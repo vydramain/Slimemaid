@@ -53,8 +53,10 @@ private:
     VkPipelineLayout pipelineLayout;
     VkPhysicalDevice physicalDevice;
     VkFormat swapChainImageFormat;
+    VkCommandBuffer commandBuffer;
     VkPipeline graphicsPipeline;
     VkExtent2D swapChainExtent;
+    VkCommandPool commandPool;
     VkSwapchainKHR swapChain;
     VkRenderPass renderPass;
     VkQueue graphicsQueue;
@@ -195,7 +197,26 @@ private:
         createRenderPass();
         createGraphicsPipeline();
         createFramebuffers();
+        createCommandPool();
+        createCommandBuffer();
 	}
+
+    void createCommandBuffer() {
+        
+    }
+
+    void createCommandPool() {
+        QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
+
+        VkCommandPoolCreateInfo commandPoolCreateInfo{};
+        commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+
+        if (VK_SUCCESS != vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &commandPool)) {
+            throw std::runtime_error("Failed to create command pool");
+        }
+    }
 
     void createFramebuffers() {
         swapChainFramebuffers.resize(swapChainImageViews.size());
@@ -218,7 +239,6 @@ private:
                     throw std::runtime_error("Failed to create framebuffer");
                 }
         }
-        
     }
 
     void createRenderPass() {
@@ -765,6 +785,12 @@ private:
 	}
 
 	void cleanUp() {
+        vkDestroyCommandPool(device, commandPool, nullptr);
+
+        for (auto framebuffer : swapChainFramebuffers) {
+            vkDestroyFramebuffer(device, framebuffer, nullptr);
+        }
+
         vkDestroyPipeline(device, graphicsPipeline, nullptr);
         vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
         vkDestroyRenderPass(device, renderPass, nullptr);
