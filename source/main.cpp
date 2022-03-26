@@ -202,7 +202,15 @@ private:
 	}
 
     void createCommandBuffer() {
-        
+        VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
+        commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        commandBufferAllocateInfo.commandPool = commandPool;
+        commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        commandBufferAllocateInfo.commandBufferCount = 1;
+
+        if (VK_SUCCESS != vkAllocateCommandBuffers(device, &commandBufferAllocateInfo, &commandBuffer)) {
+            throw std::runtime_error("Failed to allocate command buffer");
+        }
     }
 
     void createCommandPool() {
