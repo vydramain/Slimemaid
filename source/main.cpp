@@ -821,6 +821,44 @@ private:
 
 	}
 
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+        VkCommandBufferBeginInfo bufferBeginInfo{};
+        bufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        bufferBeginInfo.flags = 0; // Optional
+        bufferBeginInfo.pInheritanceInfo = nullptr; // optional
+
+        if (VK_SUCCESS != vkBeginCommandBuffer(commandBuffer, &bufferBeginInfo)) {
+            throw std::runtime_error("Failed to begin recording command buffer");
+        }
+
+        VkRenderPassBeginInfo renderPassBeginInfo{};
+        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassBeginInfo.renderPass = renderPass;
+        renderPassBeginInfo.framebuffer = swapChainFramebuffers[imageIndex];
+        renderPassBeginInfo.renderArea.offset = {0,0};
+        renderPassBeginInfo.renderArea.extent = swapChainExtent;
+
+        VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 0.0f}}};
+        renderPassBeginInfo.clearValueCount = 1;
+        renderPassBeginInfo.pClearValues = &clearColor;
+
+        vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+        vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+        vkCmdEndRenderPass(commandBuffer);
+
+        // Documentation's description for vkCmdDraw function. Parameters:
+        // vertexCount - Even though we don't have a vertex buffer, we technically still have 3 vertices to draw.
+        // instanceCount - Used for instanced rendering, use 1 if you're not doing that.
+        // firstVertex - Used as an offset into the vertex buffer, defines the lowest value of gl_VertexIndex.
+        // firstInstance - Used as an offset for instanced rendering, defines the lowest value of gl_InstanceIndex.
+
+        if (VK_SUCCESS != vkEndCommandBuffer(commandBuffer)) {
+            throw std::runtime_error("Failed to record command buffer");
+        }
+
+    }
+
 public:
     void run() {
         initWindow();
