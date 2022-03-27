@@ -871,7 +871,6 @@ private:
         // the fence is already signaled. This builted into the API.
         // This behavior reached by flag = VK_FENCE_CREATE_SIGNALED_BIT.
         vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-        vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
         uint32_t imageIndex;
         VkResult acquireImageResult = vkAcquireNextImageKHR(device,
@@ -887,6 +886,7 @@ private:
             throw std::runtime_error("Failed to acquired swap chain image");
         }
 
+        vkResetFences(device, 1, &inFlightFences[currentFrame]); // Only reset the fence if we are submitting work
 
         vkResetCommandBuffer(commandBuffers[currentFrame], 0);
         recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
