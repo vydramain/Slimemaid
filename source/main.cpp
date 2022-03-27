@@ -50,6 +50,7 @@ private:
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
+    bool framebufferResized = false;
     uint32_t currentFrame = 0;
 
     VkDebugUtilsMessengerEXT debugMessenger;
@@ -185,12 +186,19 @@ private:
         // vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
     }
 
-	void initWindow() {
-		glfwInit();
-		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+        auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+        app->framebufferResized = true;
+    }
 
-		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+	void initWindow() {
+        glfwInit();
+
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+        window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+        glfwSetWindowUserPointer(window, this);
+        glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
         std::cout << "glfw window creation process ends..." << std::endl;
 	}
 
@@ -560,6 +568,13 @@ private:
     }
 
     void recreateSwapChain() {
+        int width = 0, height = 0;
+        glfwGetFramebufferSize(window, &width, &height);
+        while (0 == width || 0 == height) {
+            glfwGetFramebufferSize(window, &width, &height);
+            glfwWaitEvents();
+        }
+
         vkDeviceWaitIdle(device);
 
         cleanUpSwapChain();
@@ -922,7 +937,10 @@ private:
         presentInfo.pImageIndices = &imageIndex;
 
         VkResult queuePresentResult = vkQueuePresentKHR(presentQueue, &presentInfo);
-        if (VK_ERROR_OUT_OF_DATE_KHR == queuePresentResult || VK_SUBOPTIMAL_KHR == queuePresentResult) {
+        if (VK_ERROR_OUT_OF_DATE_KHR == queuePresentResult ||
+            VK_SUBOPTIMAL_KHR == queuePresentResult ||
+            framebufferResized) {
+            framebufferResized = false;
             recreateSwapChain();
         } else if (VK_SUCCESS != queuePresentResult) {
             throw std::runtime_error("Failed to preset swap chain image");
