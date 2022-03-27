@@ -483,7 +483,7 @@ private:
 
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
         VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
-        VkExtent2D swapChainExtent = chooseSwapExtent(swapChainSupport.capabilities);
+        VkExtent2D tmpSwapChainExtent = chooseSwapExtent(swapChainSupport.capabilities);
 
         uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
         if (swapChainSupport.capabilities.maxImageCount > 0 &&
@@ -497,7 +497,7 @@ private:
         createInfo.minImageCount = imageCount;
         createInfo.imageFormat = surfaceFormat.format;
         createInfo.imageColorSpace = surfaceFormat.colorSpace;
-        createInfo.imageExtent = swapChainExtent;
+        createInfo.imageExtent = tmpSwapChainExtent;
         createInfo.imageArrayLayers = 1;
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
@@ -529,7 +529,7 @@ private:
        vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
 
        swapChainImageFormat = surfaceFormat.format;
-       swapChainExtent = swapChainExtent;
+       swapChainExtent = tmpSwapChainExtent;
     }
 
     VkShaderModule createShaderModule(const std::vector<char>& code) {
