@@ -7,12 +7,9 @@ clean:
 	rm -rf ./build
 
 build:	clean compile_shaders ./source/main.cpp
-	mkdir -p build
-	g++ $(CFLAGS) -o ./build/Slimemaid ./source/main.cpp $(LDFLAGS) -g
+	mkdir -p build && g++ $(CFLAGS) -o ./build/Slimemaid ./source/main.cpp $(LDFLAGS) -g
 
 .PHONY: clean compile_shaders test
 
 test:	build
-	cd ./build
-	clear
-	./Slimemaid
+	clear && cd ./build && ./Slimemaid
