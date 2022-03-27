@@ -169,16 +169,17 @@ private:
             instanceCreateInfo.pNext = nullptr;
         }
 
+
         if (VK_SUCCESS != vkCreateInstance(&instanceCreateInfo, nullptr, &instance)) {
             throw std::runtime_error("Failed to create Vulkan instance");
         } else {
             std::cout << "Vulkan instance creation process ends with success..." << std::endl;
         }
 
-        uint32_t extensionCount = 0;
-        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-        std::vector<VkExtensionProperties> extensions(extensionCount);
-        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+        // uint32_t extensionCount = 0;
+        // vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+        // std::vector<VkExtensionProperties> extensions(extensionCount);
+        // vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
     }
 
 	void initWindow() {
@@ -187,6 +188,7 @@ private:
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+        std::cout << "glfw window creation process ends..." << std::endl;
 	}
 
 	void initVulkan() {
@@ -580,20 +582,20 @@ private:
         std::vector<VkPhysicalDevice> devices(deviceCount);
         vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
-        // Use an ordered map to automatically sort candidates by increasing score
-        std::multimap<int, VkPhysicalDevice> candidates;
-
         for (const auto& device : devices) {
-            int score = rateDeviceSuitability(device);
-            candidates.insert(std::make_pair(score, device));
+            if (isDeviceSuitable(device)) {
+                physicalDevice = device;
+                break;
+            }
         }
 
-        // Check if the best candidate is suitable at all
-        if (0 < candidates.rbegin()->first) {
-            physicalDevice = candidates.rbegin()->second;
-        } else {
+        if (physicalDevice == VK_NULL_HANDLE) {
             throw std::runtime_error("No suitable GPU found");
         }
+
+        VkPhysicalDeviceProperties chosenDeviceProperties;
+        vkGetPhysicalDeviceProperties(physicalDevice, &chosenDeviceProperties);
+        std::cout << "Physucal device found: " <<  chosenDeviceProperties.deviceName << std::endl;
     }
 
     VkResult CreateDebugUtilsMessengerEXT(
@@ -631,6 +633,7 @@ private:
     }
 
     void setupDebugMessenger() {
+        std::cout << "Enable validation layers flag is: " << enableValidationLayers << std::endl;
         if (!enableValidationLayers) return;
 
         VkDebugUtilsMessengerCreateInfoEXT createInfo;
@@ -639,6 +642,8 @@ private:
         if (VK_SUCCESS != CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger)) {
             throw std::runtime_error("Failed to set up debug messenger");
         }
+
+        std::cout << "Debug messenger setup process ends with success..." << std::endl;
     }
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
@@ -809,6 +814,8 @@ private:
         if (VK_SUCCESS != glfwCreateWindowSurface(instance, window, nullptr, &surface)) {
             throw std::runtime_error("Failed to create window surface");
         }
+
+        std::cout << "glfw window surface create process ends with success..." << std::endl;
     }
 
 	void mainLoop() {
