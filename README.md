@@ -104,3 +104,8 @@ And do not forget execute shell file to set up system environment variables:
 ### Footnote
 If you have trouble with compiling and launching project check is your [development environment](https://vulkan-tutorial.com/en/Development_environment#page_Linux) set up.
 Some of this packages for RPM-based distributions can be deprecated or have different names. Check [pkgs.org](https://pkgs.org).
+
+# Special info
+
+ - [Vulkan swapchain examples with description by KhronosGroup](https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples#swapchain-image-acquire-and-present)
+ - [Information about the layout qualifier in the OpenGL wiki](https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL))
