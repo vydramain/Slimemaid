@@ -86,6 +86,7 @@ private:
     uint32_t currentFrame = 0;
 
     VkDebugUtilsMessengerEXT debugMessenger;
+    VkDeviceMemory vertexBufferMemory;
     VkPipelineLayout pipelineLayout;
     VkPhysicalDevice physicalDevice;
     VkFormat swapChainImageFormat;
@@ -278,6 +279,20 @@ private:
 
         VkMemoryRequirements vertexBufferMemRequirements;
         vkGetBufferMemoryRequirements(device, vertexBuffer, &vertexBufferMemRequirements);
+
+        VkMemoryAllocateInfo memAllocateInfo{};
+        memAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        memAllocateInfo.allocationSize = vertexBufferMemRequirements.size;
+        memAllocateInfo.memoryTypeIndex = findMemoryType(
+            vertexBufferMemRequirements.memoryTypeBits,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+        if (VK_SUCCESS != vkAllocateMemory(device, &memAllocateInfo, nullptr, &vertexBufferMemory)) {
+            throw std::runtime_error("Failed to allocate vertex buffer memory");
+        }
+
+        vkBindBufferMemory(device, vertexBuffer, vertexBufferMemory, 0);
+
     }
 
     void createSyncObjects() {
@@ -1018,6 +1033,7 @@ private:
         cleanUpSwapChain();
 
         vkDestroyBuffer(device, vertexBuffer, nullptr);
+        vkFreeMemory(device, vertexBufferMemory, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             vkDestroyFence(device, inFlightFences[i], nullptr);
