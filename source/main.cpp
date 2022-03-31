@@ -150,6 +150,19 @@ private:
         return extensions;
     }
 
+    uint32_t findMemoryType(uint32_t inputTypeFilter, VkMemoryPropertyFlags inputProperties) {
+        VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
+        vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
+
+        for (uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; i++) {
+            if (inputTypeFilter & (1 << i) && (deviceMemoryProperties.memoryTypes[i].propertyFlags & inputProperties)) {
+                return i;
+            }
+        }
+
+        throw std::runtime_error("Failed to find suitable memory type");
+    }
+
     bool checkValidationLayerSupport() {
         uint32_t layerCount;
         vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -262,6 +275,9 @@ private:
         if (VK_SUCCESS != vkCreateBuffer(device, &vertexBufferCreateInfo, nullptr, &vertexBuffer)) {
             throw std::runtime_error("Failed to create vertex buffer");
         }
+
+        VkMemoryRequirements vertexBufferMemRequirements;
+        vkGetBufferMemoryRequirements(device, vertexBuffer, &vertexBufferMemRequirements);
     }
 
     void createSyncObjects() {
