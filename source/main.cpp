@@ -293,6 +293,10 @@ private:
 
         vkBindBufferMemory(device, vertexBuffer, vertexBufferMemory, 0);
 
+        void* data;
+        vkMapMemory(device, vertexBufferMemory, 0, vertexBufferCreateInfo.size, 0, &data);
+        memcpy(data, vertices.data(), (size_t) vertexBufferCreateInfo.size);
+        vkUnmapMemory(device, vertexBufferMemory);
     }
 
     void createSyncObjects() {
