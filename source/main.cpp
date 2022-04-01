@@ -79,7 +79,7 @@ struct SwapChainSupportDetails {
 class HelloTriangleApplication {
 private:
     const std::vector<Vertex> vertices = { // {{rel_x, rel_y}, {R, G, B}}
-        {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+        {{0.0f, -0.5f}, {-.5f, -.5f, -.5f}},
         {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
         {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
     };
@@ -819,6 +819,35 @@ private:
         return indices;
     }
 
+    QueueFamilyIndices findTransferQueueFamilies(VkPhysicalDevice device) {
+        QueueFamilyIndices indices;
+
+        uint32_t queueFamilyCount = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+        int i = 0;
+        for (const auto& queueFamily : queueFamilies) {
+            if (indices.isComplete()) {
+                break;
+            }
+            if (queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT) {
+                indices.graphicsFamily = i;
+            }
+            VkBool32 presentSupport = false;
+            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+            if (presentSupport) {
+                indices.presentFamily = i;
+            }
+
+            i++;
+        }
+
+        return indices;
+    }
+
     SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) {
         SwapChainSupportDetails details;
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
@@ -913,8 +942,23 @@ private:
     }
 
     void createLogicalDevice() {
-        QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+        QueueFamilyIndices transferIndices = findTransferQueueFamilies(physicalDevice);
+        std::vector<VkDeviceQueueCreateInfo> transferQueueCreateInfos;
+        std::set<uint32_t> transferUniqueQueueFamilies = {
+            transferIndices.graphicsFamily.value(),
+            transferIndices.presentFamily.value()};
 
+        float transferQueuePriority = 1.0f;
+        for (uint32_t queueFamily : transferUniqueQueueFamilies) {
+            VkDeviceQueueCreateInfo transferQueueCreateInfo{};
+            transferQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            transferQueueCreateInfo.queueFamilyIndex = queueFamily;
+            transferQueueCreateInfo.queueCount = 1;
+            transferQueueCreateInfo.pQueuePriorities = &transferQueuePriority;
+            transferQueueCreateInfos.push_back(transferQueueCreateInfo);
+        }
+
+        QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
         std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
 
