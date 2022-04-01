@@ -9,7 +9,7 @@ If you like a challenge, then you can still try to use a different queue family 
  - Modify `createLogicalDevice` to request a handle to the transfer queue
  - Create a second command pool for command buffers that are submitted on the transfer queue family
  - Change the `sharingMode` of resources to be `VK_SHARING_MODE_CONCURRENT` and specify both the graphics and transfer queue families
- - Submit any transfer commands like [vkCmdCopyBuffer](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/vkCmdCopyBuffer.html) (which we'll be using in this chapter) to the transfer queue instead of the graphics queue
+ - Submit any transfer commands like [`vkCmdCopyBuffer`](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/vkCmdCopyBuffer.html) (which we'll be using in this chapter) to the transfer queue instead of the graphics queue
 
 It's a bit of work, but it'll teach you a lot about how resources are shared between queue families.
 
