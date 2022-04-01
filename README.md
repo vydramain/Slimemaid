@@ -106,7 +106,7 @@ If you have trouble with compiling and launching project check is your [developm
 Some of this packages for RPM-based distributions can be deprecated or have different names. Check [pkgs.org](https://pkgs.org).
 
 # Special info
-Additional information about tasks or some important info about application is [here](./NOTES.rm).
+Additional information about tasks or some important info about application is [here](./NOTES.md).
 
  - [Vulkan swapchain examples with description by KhronosGroup](https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples#swapchain-image-acquire-and-present)
  - [Information about the layout qualifier in the OpenGL wiki](https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL))
