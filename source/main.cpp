@@ -78,10 +78,13 @@ struct SwapChainSupportDetails {
 
 class HelloTriangleApplication {
 private:
+    const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
+
     const std::vector<Vertex> vertices = { // {{rel_x, rel_y}, {R, G, B}}
-        {{0.0f, -0.5f}, {-.5f, -.5f, -.5f}},
-        {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-        {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
     };
 
     const std::vector<const char*> deviceExtensions = {
@@ -93,6 +96,7 @@ private:
 
     VkDebugUtilsMessengerEXT debugMessenger;
     VkDeviceMemory vertexBufferMemory;
+    VkDeviceMemory indexBufferMemory;
     VkPipelineLayout pipelineLayout;
     VkPhysicalDevice physicalDevice;
     VkFormat swapChainImageFormat;
@@ -103,6 +107,7 @@ private:
     VkRenderPass renderPass;
     VkBuffer vertexBuffer;
     VkQueue graphicsQueue;
+    VkBuffer indexBuffer;
     VkQueue presentQueue;
     VkSurfaceKHR surface;
     VkInstance instance;
@@ -268,9 +273,38 @@ private:
         createFramebuffers();
         createCommandPool();
         createVertexBuffer();
+        createIndexBuffer();
         createCommandBuffers();
         createSyncObjects();
 	}
+
+    void createIndexBuffer() {
+        VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+        createBuffer(bufferSize,
+                     VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                     stagingBuffer,
+                     stagingBufferMemory);
+
+        void* data;
+        vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+        memcpy(data, indices.data(), (size_t) bufferSize);
+        vkUnmapMemory(device, stagingBufferMemory);
+
+        createBuffer(bufferSize,
+                     VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                     indexBuffer,
+                     indexBufferMemory);
+
+        copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+
+        vkDestroyBuffer(device, stagingBuffer, nullptr);
+        vkFreeMemory(device, stagingBufferMemory, nullptr);
+    }
 
     void copyBuffer(VkBuffer inputSrcBuffer, VkBuffer inputDstBuffer, VkDeviceSize inputBufferSize) {
         VkCommandBufferAllocateInfo allocInfo{};
@@ -1146,6 +1180,9 @@ private:
 
 	void cleanUp() {
         cleanUpSwapChain();
+
+        vkDestroyBuffer(device, indexBuffer, nullptr);
+        vkFreeMemory(device, indexBufferMemory, nullptr);
 
         vkDestroyBuffer(device, vertexBuffer, nullptr);
         vkFreeMemory(device, vertexBufferMemory, nullptr);
