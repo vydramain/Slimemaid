@@ -280,7 +280,7 @@ private:
 		createInstance();
         setupDebugMessenger();
         createSurface();
-        pickPhisicalDevice();
+        pickPhysicalDevice();
         createLogicalDevice();
         createSwapChain();
         createImageViews();
@@ -309,7 +309,6 @@ private:
         descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
         if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
             throw std::runtime_error("Failed to allocate descriptor sets for uniform buffers");
-
         }
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -393,7 +392,7 @@ private:
 
         void* data;
         vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, indices.data(), (size_t) bufferSize);
+            memcpy(data, indices.data(), (size_t) bufferSize);
         vkUnmapMemory(device, stagingBufferMemory);
 
         createBuffer(bufferSize,
@@ -487,7 +486,7 @@ private:
 
         void* data;
         vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-        memcpy(data, vertices.data(), (size_t) bufferSize);
+            memcpy(data, vertices.data(), (size_t) bufferSize);
         vkUnmapMemory(device, stagingBufferMemory);
 
         createBuffer(bufferSize,
@@ -785,11 +784,6 @@ private:
     }
 
     void cleanUpSwapChain() {
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            vkDestroyBuffer(device, uniformBuffers[i], nullptr);
-            vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
-        }
-
         for (auto framebuffer : swapChainFramebuffers) {
             vkDestroyFramebuffer(device, framebuffer, nullptr);
         }
@@ -876,10 +870,6 @@ private:
         createRenderPass();
         createGraphicsPipeline();
         createFramebuffers();
-        createUniformBuffers();
-        createDescriptorPool();
-        createDescriptorSets();
-        createCommandBuffers();
     }
 
     VkShaderModule createShaderModule(const std::vector<char>& code) {
@@ -921,7 +911,7 @@ private:
         return score;
     }
 
-    void pickPhisicalDevice() {
+    void pickPhysicalDevice() {
         uint32_t deviceCount = 0;
         vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
@@ -1250,7 +1240,7 @@ private:
         VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
-        updateUniformBuffer(imageIndex);
+        updateUniformBuffer(currentFrame);
 
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1303,27 +1293,32 @@ private:
         ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
         ubo.proj[1][1] *= -1;
 
+        // Bug reason is:
         void* data;
-        vkMapMemory(device, uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
+        vkMapMemory(device, uniformBuffersMemory.at(currentImage), 0, (VkDeviceSize) sizeof(ubo), 0, &data);
             memcpy(data, &ubo, sizeof(ubo));
-        vkUnmapMemory(device, uniformBuffersMemory[currentImage]);
+        vkUnmapMemory(device, uniformBuffersMemory.at(currentImage));
     }
 
 	void cleanUp() {
         cleanUpSwapChain();
 
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            vkDestroyBuffer(device, uniformBuffers[i], nullptr);
+            vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
+        }
+
         vkDestroyDescriptorPool(device, descriptorPool, nullptr);
         vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
         vkDestroyBuffer(device, indexBuffer, nullptr);
         vkFreeMemory(device, indexBufferMemory, nullptr);
-
         vkDestroyBuffer(device, vertexBuffer, nullptr);
         vkFreeMemory(device, vertexBufferMemory, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            vkDestroyFence(device, inFlightFences[i], nullptr);
             vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
             vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
+            vkDestroyFence(device, inFlightFences[i], nullptr);
         }
 
         vkDestroyCommandPool(device, commandPool, nullptr);
@@ -1335,8 +1330,8 @@ private:
 
         vkDestroySurfaceKHR(instance, surface, nullptr);
         vkDestroyInstance(instance, nullptr);
-		glfwDestroyWindow(window);
-		glfwTerminate();
+        glfwDestroyWindow(window);
+        glfwTerminate();
 	}
 
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
