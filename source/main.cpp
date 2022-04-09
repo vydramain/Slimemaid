@@ -1,9 +1,9 @@
 #define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #include <glm/glm.hpp>
+#include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -111,6 +111,7 @@ private:
     VkDebugUtilsMessengerEXT debugMessenger;
     VkDescriptorSetLayout descriptorSetLayout;
     VkDeviceMemory vertexBufferMemory;
+    VkDeviceMemory textureImageMemory;
     VkDeviceMemory indexBufferMemory;
     VkPipelineLayout pipelineLayout;
     VkPhysicalDevice physicalDevice;
@@ -123,6 +124,7 @@ private:
     VkRenderPass renderPass;
     VkBuffer vertexBuffer;
     VkQueue graphicsQueue;
+    VkImage textureImage;
     VkBuffer indexBuffer;
     VkQueue presentQueue;
     VkSurfaceKHR surface;
@@ -215,6 +217,79 @@ private:
         }
 
         return true;
+    }
+
+    void createBuffer(VkDeviceSize inputSize,
+                      VkBufferUsageFlags inputUsage,
+                      VkMemoryPropertyFlags inputMemoryProperties,
+                      VkBuffer& buffer,
+                      VkDeviceMemory& bufferMemory) {
+
+        VkBufferCreateInfo bufferCreateInfo{};
+        bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferCreateInfo.size = inputSize;
+        bufferCreateInfo.usage = inputUsage;
+        bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        if (VK_SUCCESS != vkCreateBuffer(device, &bufferCreateInfo, nullptr, &buffer)) {
+            throw std::runtime_error("Failed to create buffer");
+        }
+
+        VkMemoryRequirements bufferMemRequirements;
+        vkGetBufferMemoryRequirements(device, buffer, &bufferMemRequirements);
+
+        VkMemoryAllocateInfo memAllocateInfo{};
+        memAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        memAllocateInfo.allocationSize = bufferMemRequirements.size;
+        memAllocateInfo.memoryTypeIndex = findMemoryType(bufferMemRequirements.memoryTypeBits, inputMemoryProperties);
+
+        if (VK_SUCCESS != vkAllocateMemory(device, &memAllocateInfo, nullptr, &bufferMemory)) {
+            throw std::runtime_error("Failed to allocate buffer memory");
+        }
+
+        vkBindBufferMemory(device, buffer, bufferMemory, 0);
+    }
+
+    void createImage(uint32_t inputWidth,
+                     uint32_t inputHeight,
+                     VkFormat inputFormat,
+                     VkImageTiling inputTiling,
+                     VkImageUsageFlags inputUsage,
+                     VkMemoryPropertyFlags inputProperties,
+                     VkImage& pImage,
+                     VkDeviceMemory& pImageMemory) {
+        VkImageCreateInfo imageInfo{};
+        imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        imageInfo.imageType = VK_IMAGE_TYPE_2D;
+        imageInfo.extent.width = inputWidth;
+        imageInfo.extent.height = inputHeight;
+        imageInfo.extent.depth = 1;
+        imageInfo.mipLevels = 1;
+        imageInfo.arrayLayers = 1;
+        imageInfo.format = inputFormat;
+        imageInfo.tiling = inputTiling;
+        imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        imageInfo.usage = inputUsage;
+        imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+        imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        if (vkCreateImage(device, &imageInfo, nullptr, &pImage) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create image!");
+        }
+
+        VkMemoryRequirements memRequirements;
+        vkGetImageMemoryRequirements(device, pImage, &memRequirements);
+
+        VkMemoryAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, inputProperties);
+
+        if (vkAllocateMemory(device, &allocInfo, nullptr, &pImageMemory) != VK_SUCCESS) {
+            throw std::runtime_error("failed to allocate image memory!");
+        }
+
+        vkBindImageMemory(device, pImage, pImageMemory, 0);
     }
 
     void createInstance() {
@@ -317,21 +392,31 @@ private:
             throw std::runtime_error("Failed to load raw texture from: " + texturePath);
         }
 
-        // VkBuffer stagingBuffer;
-        // VkDeviceMemory stagingBufferMemory;
-        //
-        // createBuffer(imageSize,
-        //              VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        //              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        //              stagingBuffer,
-        //              stagingBufferMemory);
-        //
-        // void* data;
-        // vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-        //     memcpy(data, pixels, static_cast<size_t>(imageSize));
-        // vkUnmapMemory(device, stagingBufferMemory);
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+
+        createBuffer(imageSize,
+                     VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                     stagingBuffer,
+                     stagingBufferMemory);
+
+        void* data;
+        vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
+            memcpy(data, pixels, static_cast<size_t>(imageSize));
+        vkUnmapMemory(device, stagingBufferMemory);
 
         stbi_image_free(pixels);
+
+        createImage(textureWidth,
+                    textureHeight,
+                    VK_FORMAT_R8G8B8A8_SRGB,
+                    VK_IMAGE_TILING_OPTIMAL,
+                    VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                    textureImage,
+                    textureImageMemory);
+
     }
 
     void createDescriptorSets() {
@@ -476,37 +561,6 @@ private:
         vkQueueWaitIdle(graphicsQueue);
 
         vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-    }
-
-    void createBuffer(VkDeviceSize inputSize,
-                      VkBufferUsageFlags inputUsage,
-                      VkMemoryPropertyFlags inputMemoryProperties,
-                      VkBuffer& buffer,
-                      VkDeviceMemory& bufferMemory) {
-
-        VkBufferCreateInfo bufferCreateInfo{};
-        bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufferCreateInfo.size = inputSize;
-        bufferCreateInfo.usage = inputUsage;
-        bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-        if (VK_SUCCESS != vkCreateBuffer(device, &bufferCreateInfo, nullptr, &buffer)) {
-            throw std::runtime_error("Failed to create buffer");
-        }
-
-        VkMemoryRequirements bufferMemRequirements;
-        vkGetBufferMemoryRequirements(device, buffer, &bufferMemRequirements);
-
-        VkMemoryAllocateInfo memAllocateInfo{};
-        memAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        memAllocateInfo.allocationSize = bufferMemRequirements.size;
-        memAllocateInfo.memoryTypeIndex = findMemoryType(bufferMemRequirements.memoryTypeBits, inputMemoryProperties);
-
-        if (VK_SUCCESS != vkAllocateMemory(device, &memAllocateInfo, nullptr, &bufferMemory)) {
-            throw std::runtime_error("Failed to allocate buffer memory");
-        }
-
-        vkBindBufferMemory(device, buffer, bufferMemory, 0);
     }
 
     void createVertexBuffer() {
