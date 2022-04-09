@@ -1,6 +1,6 @@
-CFLAGS = -std=c++17 -O2
-LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lXrandr -lXi
 STB_INCLUDE_PATH = ./libraries/stb
+LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lXrandr -lXi
+CFLAGS = -std=c++17 -O2 -I$(STB_INCLUDE_PATH)
 
 compile_shaders: ./shaders/*
 	./compile_shaders.sh
