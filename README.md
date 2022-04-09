@@ -110,3 +110,5 @@ Additional information about tasks or some important info about application is [
 
  - [Vulkan swapchain examples with description by KhronosGroup](https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples#swapchain-image-acquire-and-present)
  - [Information about the layout qualifier in the OpenGL wiki](https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL))
+ - [Matrices and operations with them by OpenGL Tutorial](https://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/)
+ - [Vulkan expects the data in your structure to be aligned in memory in a specific way](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/html/chap15.html#interfaces-resources-layout)
