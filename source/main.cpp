@@ -292,6 +292,7 @@ private:
         createGraphicsPipeline();
         createFramebuffers();
         createCommandPool();
+        createTextureImage();
         createVertexBuffer();
         createIndexBuffer();
         createUniformBuffers();
@@ -300,6 +301,38 @@ private:
         createCommandBuffers();
         createSyncObjects();
 	}
+
+    void createTextureImage() {
+        int textureHeight, textureWidth, textureChannels;
+        std::string texturePath = "./raws/cube_yellow/body.png";
+
+        stbi_uc* pixels = stbi_load(texturePath.c_str(),
+                                    &textureWidth,
+                                    &textureHeight,
+                                    &textureChannels,
+                                    STBI_rgb_alpha);
+
+        VkDeviceSize imageSize = textureWidth * textureHeight * 4;
+        if (!pixels) {
+            throw std::runtime_error("Failed to load raw texture " + texturePath);
+        }
+
+        VkBuffer stagingBuffer;
+        VkDeviceMemory stagingBufferMemory;
+
+        createBuffer(imageSize,
+                     VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                     stagingBuffer,
+                     stagingBufferMemory);
+
+        void* data;
+        vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
+            memcpy(data, pixels, static_cast<size_t>(imageSize));
+        vkUnmapMemory(device, stagingBufferMemory);
+
+        stbi_image_free(pixels);
+    }
 
     void createDescriptorSets() {
         std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
