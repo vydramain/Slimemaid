@@ -10,9 +10,10 @@ This version wrote on Linux and adapted only for this platform. Try it on MacOS 
 List of dependencies:
  - [gcc (GCC) 11.2](https://gcc.gnu.org/gcc-11/)
  - [GNU Make 4.3](https://www.gnu.org/software/make/)
+ - [VulkanSDK 1.3.204.1](https://vulkan.lunarg.com/sdk/home)
  - [GLFW 3.3.6](https://www.glfw.org/)
  - [GLM 0.9.9.9](https://github.com/g-truc/glm)
- - [VulkanSDK 1.3.204.1](https://vulkan.lunarg.com/sdk/home)
+ - [stb collection](https://github.com/nothings/stb)
 
 ### Conventions
 
@@ -112,3 +113,4 @@ Additional information about tasks or some important info about application is [
  - [Information about the layout qualifier in the OpenGL wiki](https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL))
  - [Matrices and operations with them by OpenGL Tutorial](https://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/)
  - [Vulkan expects the data in your structure to be aligned in memory in a specific way](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/html/chap15.html#interfaces-resources-layout)
+ - [Vulkan also allows to copy pixels from a `VkBuffer` to an image and the API for this is actually faster on some hardware](https://developer.nvidia.com/vulkan-memory-management)
