@@ -90,7 +90,7 @@ struct SwapChainSupportDetails {
     std::vector<VkPresentModeKHR> presentModes;
 };
 
-class HelloTriangleApplication {
+class SlimeApplication {
 private:
     const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
 
@@ -446,7 +446,7 @@ private:
     }
 
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-        auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+        auto app = reinterpret_cast<SlimeApplication*>(glfwGetWindowUserPointer(window));
         app->framebufferResized = true;
     }
 
@@ -1582,7 +1582,7 @@ public:
 };
 
 int main() {
-	HelloTriangleApplication app;
+	SlimeApplication app;
 
 	try {
 		app.run();
