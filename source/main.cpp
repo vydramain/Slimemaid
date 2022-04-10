@@ -349,7 +349,7 @@ private:
         endSingleTimeCommands(commandBuffer);
     }
 
-    void transitionsImageLayout(VkImage inputImage,
+    void transitionImageLayout(VkImage inputImage,
                                 VkFormat inputFormat,
                                 VkImageLayout inputOldImageLayout,
                                 VkImageLayout inputNewImageLayout) {
@@ -367,12 +367,30 @@ private:
         imageMemoryBarrier.subresourceRange.levelCount = 1;
         imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
         imageMemoryBarrier.subresourceRange.layerCount = 1;
-        imageMemoryBarrier.srcAccessMask = 0; // TODO
-        imageMemoryBarrier.dstAccessMask = 0; // TODO
+
+        VkPipelineStageFlags sourceStage;
+        VkPipelineStageFlags destinationStage;
+
+        if (inputOldImageLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+            inputNewImageLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+            imageMemoryBarrier.srcAccessMask = 0; // Implicit VK_ACCESS_HOST_WRITE_BIT
+            imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        } else if (inputOldImageLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+                   inputNewImageLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+            imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+            sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+            destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        } else {
+            throw std::runtime_error("Unsupported layout transition");
+        }
 
         vkCmdPipelineBarrier(commandBuffer,
-                             0, // TODO
-                             0, // TODO
+                             sourceStage, destinationStage,
                              0,
                              0, nullptr,
                              0, nullptr,
@@ -506,6 +524,22 @@ private:
                     textureImage,
                     textureImageMemory);
 
+        transitionImageLayout(textureImage,
+                              VK_FORMAT_R8G8B8A8_SRGB,
+                              VK_IMAGE_LAYOUT_UNDEFINED,
+                              VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        copyBufferToImage(stagingBuffer,
+                          textureImage,
+                          static_cast<size_t>(textureWidth),
+                          static_cast<size_t>(textureHeight));
+
+        transitionImageLayout(textureImage,
+                              VK_FORMAT_R8G8B8A8_SRGB,
+                              VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                              VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+        vkDestroyBuffer(device, stagingBuffer, nullptr);
+        vkFreeMemory(device, stagingBufferMemory, nullptr);
     }
 
     void createDescriptorSets() {
@@ -1458,6 +1492,9 @@ private:
 
 	void cleanUp() {
         cleanUpSwapChain();
+
+        vkDestroyImage(device, textureImage, nullptr);
+        vkFreeMemory(device, textureImageMemory, nullptr);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             vkDestroyBuffer(device, uniformBuffers[i], nullptr);
