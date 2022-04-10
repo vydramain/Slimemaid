@@ -325,6 +325,30 @@ private:
         vkFreeCommandBuffers(device, commandPool, 1, &inputCommandBuffer);
     }
 
+    void copyBufferToImage(VkBuffer inputBuffer, VkImage inputImage, uint32_t inputWidth, uint32_t inputHeight) {
+        VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+        VkBufferImageCopy imageRegion{};
+        imageRegion.bufferOffset = 0;
+        imageRegion.bufferRowLength = 0;
+        imageRegion.bufferImageHeight = 0;
+        imageRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        imageRegion.imageSubresource.mipLevel = 0;
+        imageRegion.imageSubresource.baseArrayLayer = 0;
+        imageRegion.imageSubresource.layerCount = 1;
+        imageRegion.imageOffset = {0,0,0};
+        imageRegion.imageExtent = {inputWidth, inputHeight, 1};
+
+        vkCmdCopyBufferToImage(commandBuffer,
+                               inputBuffer,
+                               inputImage,
+                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                               1,
+                               &imageRegion);
+
+        endSingleTimeCommands(commandBuffer);
+    }
+
     void transitionsImageLayout(VkImage inputImage,
                                 VkFormat inputFormat,
                                 VkImageLayout inputOldImageLayout,
