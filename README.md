@@ -114,3 +114,4 @@ Additional information about tasks or some important info about application is [
  - [Matrices and operations with them by OpenGL Tutorial](https://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/)
  - [Vulkan expects the data in your structure to be aligned in memory in a specific way](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/html/chap15.html#interfaces-resources-layout)
  - [Vulkan also allows to copy pixels from a `VkBuffer` to an image and the API for this is actually faster on some hardware](https://developer.nvidia.com/vulkan-memory-management)
+ - [Nvidia's book: GPUGems](https://developer.nvidia.com/gpugems/gpugems/contributors)
