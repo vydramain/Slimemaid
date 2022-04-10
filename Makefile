@@ -1,15 +1,20 @@
-CFLAGS = -std=c++17 -O2
+STB_INCLUDE_PATH = ./libraries/stb
 LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lXrandr -lXi
-compile_shaders: ./shaders/*
-	./compile_shaders.sh
+CFLAGS = -std=c++17 -O2 -I$(STB_INCLUDE_PATH)
 
 clean:
 	rm -rf ./build
 
-build:	clean compile_shaders ./source/main.cpp
+compile_shaders: ./shaders/*
+	./compile_shaders.sh
+
+prepare_raws: ./raws/*
+	cp -r ./raws ./build/raws
+
+build:	clean compile_shaders prepare_raws ./source/main.cpp
 	mkdir -p build && g++ $(CFLAGS) -o ./build/Slimemaid ./source/main.cpp $(LDFLAGS) -g
 
-.PHONY: clean compile_shaders test
+.PHONY: clean compile_shaders prepare_raws test
 
 test:	build
 	clear && cd ./build && ./Slimemaid
