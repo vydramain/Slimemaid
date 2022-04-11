@@ -1,6 +1,7 @@
 #define GLFW_INCLUDE_VULKAN
 
 #define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPHT_ZERO_TO_ONE
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
@@ -46,7 +47,7 @@ struct UniformBufferObject {
 };
 
 struct Vertex {
-    glm::vec2 pos;
+    glm::vec3 pos;
     glm::vec3 color;
     glm::vec2 texCoord;
 
@@ -64,7 +65,7 @@ struct Vertex {
 
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0;
-    attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
     attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
     attributeDescriptions[1].binding = 0;
@@ -98,13 +99,18 @@ struct SwapChainSupportDetails {
 
 class SlimeApplication {
 private:
-    const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
+    const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4};
 
-    const std::vector<Vertex> vertices = { // {{rel_x, rel_y}, {R, G, B}, {tex_rel_x, tex_rel_x}}
-    {{-0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},         // top-right
-    {{0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},          // top-left
-    {{0.5f, 0.5f}, {-.1f, -.1f, -.1f}, {0.0f, 1.0f}},           // bottom-left
-    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}}           // bottom-right
+    const std::vector<Vertex> vertices = { // {{rel_x, rel_y, rel_z}, {R, G, B}, {tex_rel_x, tex_rel_x}}
+    {{-0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},         // top-right
+    {{0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},          // top-left
+    {{0.5f, 0.5f, 0.0f}, {-.1f, -.1f, -.1f}, {0.0f, 1.0f}},           // bottom-left
+    {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},          // bottom-right
+
+    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
     };
 
     const std::vector<const char*> deviceExtensions = {
@@ -122,10 +128,12 @@ private:
     VkPipelineLayout pipelineLayout;
     VkPhysicalDevice physicalDevice;
     VkDescriptorPool descriptorPool;
+    VkDeviceMemory depthImageMemory;
     VkFormat swapChainImageFormat;
     VkImageView textureImageView;
     VkPipeline graphicsPipeline;
     VkExtent2D swapChainExtent;
+    VkImageView depthImageView;
     VkCommandPool commandPool;
     VkSampler textureSampler;
     VkSwapchainKHR swapChain;
@@ -137,6 +145,7 @@ private:
     VkQueue presentQueue;
     VkSurfaceKHR surface;
     VkInstance instance;
+    VkImage depthImage;
     GLFWwindow* window;
     VkDevice device;
 
@@ -202,6 +211,36 @@ private:
         }
 
         throw std::runtime_error("Failed to find suitable memory type");
+    }
+
+    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates,
+                                 VkImageTiling inputTiling,
+                                 VkFormatFeatureFlags inputFeatures) {
+        for (auto format : candidates) {
+            VkFormatProperties properties;
+            vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &properties);
+            if (VK_IMAGE_TILING_LINEAR == inputTiling &&
+                (properties.linearTilingFeatures & inputFeatures) == inputFeatures) {
+                return format;
+            } else if (VK_IMAGE_TILING_OPTIMAL == inputTiling &&
+                       (properties.optimalTilingFeatures & inputFeatures) == inputFeatures){
+                return format;
+            }
+        }
+
+        throw std::runtime_error("Failed to find supported depth image format");
+    }
+
+    VkFormat findDepthFormat() {
+        return findSupportedFormat(
+            {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+        );
+    }
+
+    bool hasStencilComponent(VkFormat format) {
+        return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
     }
 
     bool checkValidationLayerSupport() {
@@ -370,18 +409,26 @@ private:
         imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         imageMemoryBarrier.image = inputImage;
-        imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         imageMemoryBarrier.subresourceRange.baseMipLevel = 0;
         imageMemoryBarrier.subresourceRange.levelCount = 1;
         imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
         imageMemoryBarrier.subresourceRange.layerCount = 1;
+        if (inputNewImageLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+            imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+            if (hasStencilComponent(inputFormat)) {
+                imageMemoryBarrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+            }
+        } else {
+            imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        }
 
         VkPipelineStageFlags sourceStage;
         VkPipelineStageFlags destinationStage;
 
         if (inputOldImageLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
             inputNewImageLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-            imageMemoryBarrier.srcAccessMask = 0; // Implicit VK_ACCESS_HOST_WRITE_BIT
+            imageMemoryBarrier.srcAccessMask = 0;
             imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
             sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
@@ -393,8 +440,15 @@ private:
 
             sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
             destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        } else if (inputOldImageLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+                   inputNewImageLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+            imageMemoryBarrier.srcAccessMask = 0;
+            imageMemoryBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         } else {
-            throw std::runtime_error("Unsupported layout transition");
+            throw std::invalid_argument("unsupported layout transition!");
         }
 
         vkCmdPipelineBarrier(commandBuffer,
@@ -408,13 +462,14 @@ private:
     }
 
     VkImageView createImageView(VkImage inputImage,
-                                VkFormat inputFormat) {
+                                VkFormat inputFormat,
+                                VkImageAspectFlags inputFlags) {
         VkImageViewCreateInfo viewInfo{};
         viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         viewInfo.image = inputImage;
         viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         viewInfo.format = inputFormat;
-        viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        viewInfo.subresourceRange.aspectMask = inputFlags;
         viewInfo.subresourceRange.baseMipLevel = 0;
         viewInfo.subresourceRange.levelCount = 1;
         viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -503,6 +558,7 @@ private:
         createGraphicsPipeline();
         createFramebuffers();
         createCommandPool();
+        createDepthResources();
         createTextureImage();
         createTextureImageView();
         createTextureSampler();
@@ -514,6 +570,23 @@ private:
         createCommandBuffers();
         createSyncObjects();
 	}
+
+    void createDepthResources() {
+        VkFormat depthFormat = findDepthFormat();
+
+        createImage(swapChainExtent.width,
+                    swapChainExtent.height,
+                    depthFormat,
+                    VK_IMAGE_TILING_OPTIMAL,
+                    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                    depthImage,
+                    depthImageMemory);
+
+        depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+
+    }
 
     void createTextureSampler() {
         VkPhysicalDeviceProperties deviceProperties{};
@@ -543,7 +616,7 @@ private:
     }
 
     void createTextureImageView() {
-        textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB);
+        textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 
     void createTextureImage() {
@@ -1042,7 +1115,7 @@ private:
         swapChainImageViews.resize(swapChainImages.size());
 
         for (uint32_t i = 0; i < swapChainImages.size(); i++) {
-            swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat);
+            swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
         }
     }
 
