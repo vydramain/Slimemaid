@@ -558,9 +558,9 @@ private:
         createRenderPass();
         createDescriptorSetLayout();
         createGraphicsPipeline();
-        createFramebuffers();
         createCommandPool();
         createDepthResources();
+        createFramebuffers();
         createTextureImage();
         createTextureImageView();
         createTextureSampler();
@@ -909,15 +909,16 @@ private:
     void createFramebuffers() {
         swapChainFramebuffers.resize(swapChainImageViews.size());
         for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-            VkImageView attachments[] = {
-                swapChainImageViews[i]
+            std::array<VkImageView, 2> attachments = {
+                swapChainImageViews[i],
+                depthImageView
             };
 
             VkFramebufferCreateInfo framebufferCreateInfo{};
             framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferCreateInfo.renderPass = renderPass;
-            framebufferCreateInfo.attachmentCount = 1;
-            framebufferCreateInfo.pAttachments = attachments;
+            framebufferCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+            framebufferCreateInfo.pAttachments = attachments.data();
             framebufferCreateInfo.width = swapChainExtent.width;
             framebufferCreateInfo.height = swapChainExtent.height;
             framebufferCreateInfo.layers = 1;
@@ -979,7 +980,7 @@ private:
 
         VkRenderPassCreateInfo renderPassCreateInfo{};
         renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassCreateInfo.attachmentCount = static_cast<size_t>(attachments.size());
+        renderPassCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
         renderPassCreateInfo.pAttachments = attachments.data();
         renderPassCreateInfo.subpassCount = 1;
         renderPassCreateInfo.pSubpasses = &subpassDescription;
@@ -1070,6 +1071,18 @@ private:
         multisampleStateCreateInfo.alphaToCoverageEnable = VK_FALSE; // Optional
         multisampleStateCreateInfo.alphaToOneEnable = VK_FALSE; // Optional
 
+        VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo{};
+        depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+        depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
+        depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
+        depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_ALWAYS;
+        depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
+        depthStencilStateCreateInfo.minDepthBounds = 0.0f; // Optional
+        depthStencilStateCreateInfo.maxDepthBounds = 1.0f; // Optional
+        depthStencilStateCreateInfo.stencilTestEnable = VK_FALSE;
+        depthStencilStateCreateInfo.front = {}; // Optional
+        depthStencilStateCreateInfo.back = {}; // Optional
+
         VkPipelineColorBlendAttachmentState colorBlendAttachment{};
         colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         colorBlendAttachment.blendEnable = VK_TRUE;
@@ -1116,7 +1129,7 @@ private:
         pipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
         pipelineCreateInfo.pRasterizationState = &rasterizationCreateInfo;
         pipelineCreateInfo.pMultisampleState = &multisampleStateCreateInfo;
-        pipelineCreateInfo.pDepthStencilState = nullptr; // Optional
+        pipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
         pipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
         pipelineCreateInfo.pDynamicState = nullptr; // Optional
         pipelineCreateInfo.layout = pipelineLayout;
@@ -1216,8 +1229,7 @@ private:
 
     void recreateSwapChain() {
         int width = 0, height = 0;
-        glfwGetFramebufferSize(window, &width, &height);
-        while (0 == width || 0 == height) {
+        while (width == 0 || height == 0) {
             glfwGetFramebufferSize(window, &width, &height);
             glfwWaitEvents();
         }
@@ -1230,7 +1242,12 @@ private:
         createImageViews();
         createRenderPass();
         createGraphicsPipeline();
+        createDepthResources();
         createFramebuffers();
+        createUniformBuffers();
+        createDescriptorPool();
+        createDescriptorSets();
+        createCommandBuffers();
     }
 
     VkShaderModule createShaderModule(const std::vector<char>& code) {
@@ -1668,6 +1685,9 @@ private:
 	void cleanUp() {
         cleanUpSwapChain();
 
+        vkDestroyImageView(device, depthImageView, nullptr);
+        vkDestroyImage(device, depthImage, nullptr);
+        vkFreeMemory(device, depthImageMemory, nullptr);
         vkDestroySampler(device, textureSampler, nullptr);
         vkDestroyImageView(device, textureImageView, nullptr);
         vkDestroyImage(device, textureImage, nullptr);
@@ -1721,9 +1741,12 @@ private:
         renderPassBeginInfo.renderArea.offset = {0,0};
         renderPassBeginInfo.renderArea.extent = swapChainExtent;
 
-        VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 0.0f}}};
-        renderPassBeginInfo.clearValueCount = 1;
-        renderPassBeginInfo.pClearValues = &clearColor;
+        std::array<VkClearValue, 2> clearValues{};
+        clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+        clearValues[1].depthStencil = {1.0f, 0};
+
+        renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+        renderPassBeginInfo.pClearValues = clearValues.data();
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
