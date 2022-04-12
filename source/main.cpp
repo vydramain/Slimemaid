@@ -398,9 +398,9 @@ private:
     }
 
     void transitionImageLayout(VkImage inputImage,
-                                VkFormat inputFormat,
-                                VkImageLayout inputOldImageLayout,
-                                VkImageLayout inputNewImageLayout) {
+                               VkFormat inputFormat,
+                               VkImageLayout inputOldImageLayout,
+                               VkImageLayout inputNewImageLayout) {
         VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
         VkImageMemoryBarrier imageMemoryBarrier{};
@@ -429,7 +429,7 @@ private:
 
         if (VK_IMAGE_LAYOUT_UNDEFINED == inputOldImageLayout &&
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL == inputNewImageLayout) {
-            imageMemoryBarrier.srcAccessMask = 0; // Implicit VK_ACCESS_HOST_WRITE_BIT
+            imageMemoryBarrier.srcAccessMask = 0;
             imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
             sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
@@ -442,7 +442,7 @@ private:
             sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
             destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         } else if (VK_IMAGE_LAYOUT_UNDEFINED == inputOldImageLayout &&
-                   VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL == inputNewImageLayout){
+                   VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL == inputNewImageLayout) {
             imageMemoryBarrier.srcAccessMask = 0;
             imageMemoryBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
                                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
@@ -450,8 +450,9 @@ private:
             sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
             destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         } else {
-            throw std::runtime_error("Unsupported layout transition");
+            throw std::invalid_argument("Unsupported layout transition");
         }
+
 
         vkCmdPipelineBarrier(commandBuffer,
                              sourceStage, destinationStage,
@@ -524,11 +525,6 @@ private:
         } else {
             std::cout << "Vulkan instance creation process ends with success..." << std::endl;
         }
-
-        // uint32_t extensionCount = 0;
-        // vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-        // std::vector<VkExtensionProperties> extensions(extensionCount);
-        // vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
     }
 
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
@@ -585,11 +581,7 @@ private:
                     depthImage,
                     depthImageMemory);
         depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
-
-        transitionImageLayout(depthImage,
-                              depthFormat,
-                              VK_IMAGE_LAYOUT_UNDEFINED,
-                              VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+        transitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
     }
 
     void createTextureSampler() {
