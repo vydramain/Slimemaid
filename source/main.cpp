@@ -125,12 +125,14 @@ private:
     VkDeviceMemory vertexBufferMemory;
     VkDeviceMemory textureImageMemory;
     VkDeviceMemory indexBufferMemory;
+    VkDeviceMemory depthImageMemory;
     VkPipelineLayout pipelineLayout;
     VkPhysicalDevice physicalDevice;
     VkDescriptorPool descriptorPool;
     VkFormat swapChainImageFormat;
     VkImageView textureImageView;
     VkPipeline graphicsPipeline;
+    VkImageView depthImageView;
     VkExtent2D swapChainExtent;
     VkCommandPool commandPool;
     VkSampler textureSampler;
@@ -144,6 +146,7 @@ private:
     VkSurfaceKHR surface;
     VkInstance instance;
     GLFWwindow* window;
+    VkImage depthImage;
     VkDevice device;
 
     std::vector<VkSemaphore> imageAvailableSemaphores;
@@ -208,6 +211,37 @@ private:
         }
 
         throw std::runtime_error("Failed to find suitable memory type");
+    }
+
+    VkFormat findSupportedDepthFormat(const std::vector<VkFormat>& candidates,
+                                      VkImageTiling inputTiling,
+                                      VkFormatFeatureFlags inputFlags) {
+        for (VkFormat format : candidates) {
+            VkFormatProperties deviceProperties;
+            vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &deviceProperties);
+
+            if (VK_IMAGE_TILING_LINEAR == inputTiling &&
+               (deviceProperties.linearTilingFeatures & inputFlags) == inputFlags) {
+                return format;
+            } else if (VK_IMAGE_TILING_OPTIMAL == inputTiling &&
+                      (deviceProperties.optimalTilingFeatures & inputFlags) == inputFlags) {
+                return format;
+            }
+        }
+
+        throw std::runtime_error("Failed to find supported depth format");
+    }
+
+    VkFormat findDepthFormat() {
+        return findSupportedDepthFormat(
+            {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+        );
+    }
+
+    bool hasStencilComponent(VkFormat format) {
+        return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
     }
 
     bool checkValidationLayerSupport() {
@@ -376,29 +410,45 @@ private:
         imageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         imageMemoryBarrier.image = inputImage;
-        imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         imageMemoryBarrier.subresourceRange.baseMipLevel = 0;
         imageMemoryBarrier.subresourceRange.levelCount = 1;
         imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
         imageMemoryBarrier.subresourceRange.layerCount = 1;
+        if (VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL == inputNewImageLayout) {
+            imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+            if (hasStencilComponent(inputFormat)) {
+                imageMemoryBarrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+            }
+        } else {
+            imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        }
 
         VkPipelineStageFlags sourceStage;
         VkPipelineStageFlags destinationStage;
 
-        if (inputOldImageLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
-            inputNewImageLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+        if (VK_IMAGE_LAYOUT_UNDEFINED == inputOldImageLayout &&
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL == inputNewImageLayout) {
             imageMemoryBarrier.srcAccessMask = 0; // Implicit VK_ACCESS_HOST_WRITE_BIT
             imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
             sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
             destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        } else if (inputOldImageLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
-                   inputNewImageLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+        } else if (VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL == inputOldImageLayout &&
+                   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL == inputNewImageLayout) {
             imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
             imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
             sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
             destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        } else if (VK_IMAGE_LAYOUT_UNDEFINED == inputOldImageLayout &&
+                   VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL == inputNewImageLayout){
+            imageMemoryBarrier.srcAccessMask = 0;
+            imageMemoryBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+                                               VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
         } else {
             throw std::runtime_error("Unsupported layout transition");
         }
@@ -414,13 +464,14 @@ private:
     }
 
     VkImageView createImageView(VkImage inputImage,
-                                VkFormat inputFormat) {
+                                VkFormat inputFormat,
+                                VkImageAspectFlags inputAspectMask) {
         VkImageViewCreateInfo viewInfo{};
         viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         viewInfo.image = inputImage;
         viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         viewInfo.format = inputFormat;
-        viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        viewInfo.subresourceRange.aspectMask = inputAspectMask;
         viewInfo.subresourceRange.baseMipLevel = 0;
         viewInfo.subresourceRange.levelCount = 1;
         viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -509,6 +560,7 @@ private:
         createGraphicsPipeline();
         createFramebuffers();
         createCommandPool();
+        createDepthResources();
         createTextureImage();
         createTextureImageView();
         createTextureSampler();
@@ -520,6 +572,25 @@ private:
         createCommandBuffers();
         createSyncObjects();
 	}
+
+    void createDepthResources() {
+        VkFormat depthFormat = findDepthFormat();
+
+        createImage(swapChainExtent.width,
+                    swapChainExtent.height,
+                    depthFormat,
+                    VK_IMAGE_TILING_OPTIMAL,
+                    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                    depthImage,
+                    depthImageMemory);
+        depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+        transitionImageLayout(depthImage,
+                              depthFormat,
+                              VK_IMAGE_LAYOUT_UNDEFINED,
+                              VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    }
 
     void createTextureSampler() {
         VkPhysicalDeviceProperties deviceProperties{};
@@ -549,7 +620,7 @@ private:
     }
 
     void createTextureImageView() {
-        textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB);
+        textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 
     void createTextureImage() {
@@ -1048,7 +1119,9 @@ private:
         swapChainImageViews.resize(swapChainImages.size());
 
         for (uint32_t i = 0; i < swapChainImages.size(); i++) {
-            swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat);
+            swapChainImageViews[i] = createImageView(swapChainImages[i],
+                                                     swapChainImageFormat,
+                                                     VK_IMAGE_ASPECT_COLOR_BIT);
         }
     }
 
