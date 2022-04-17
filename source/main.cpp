@@ -2,13 +2,18 @@
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
+#define GLM_ENABLE_EXPERIMENTAL
 #define GLM_FORSE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES // dif
 #include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tiny_obj_loader.h"
 
 #include <algorithm> // Necessary for std::clamp
 #include <stdexcept>
@@ -29,6 +34,9 @@
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+
+const std::string MODEL_PATH = "raws/viking_room/viking_room.obj";
+const std::string TEXTURE_PATH = "raws/viking_room/viking_room.png";
 
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
@@ -99,7 +107,21 @@ struct Vertex {
 
     return attributeDescriptions;
     }
+
+    bool operator== (const Vertex& other) const {
+        return pos == other.pos && color == other.color && texCoord == other.texCoord;
+    }
 };
+
+namespace std {
+    template<> struct hash<Vertex> {
+        size_t operator()(Vertex const& vertex) const {
+            return ((hash<glm::vec3>()(vertex.pos) ^
+                   (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
+                   (hash<glm::vec2>()(vertex.texCoord) << 1);
+        }
+    };
+}
 
 VkResult CreateDebugUtilsMessengerEXT(
     VkInstance instance,
@@ -125,23 +147,6 @@ void DestroyDebugUtilsMessengerEXT(
         func(instance, debugMessenger, pAllocator);
     }
 }
-
-const std::vector<uint16_t> indices = {
-    0, 1, 2, 2, 3, 0,
-    4, 5, 6, 6, 7, 4
-};
-
-const std::vector<Vertex> vertices = { // {{rel_x, rel_y, rel_z}, {R, G, B}, {tex_rel_x, tex_rel_x}}
-    {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},         // top-right
-    {{0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},          // top-left
-    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},           // bottom-left
-    {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},          // bottom-right
-
-    {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},
-    {{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},
-};
 
 class SlimeApplication {
 private:
@@ -179,6 +184,9 @@ private:
     VkDeviceMemory textureImageMemory;
     VkImageView textureImageView;
     VkSampler textureSampler;
+
+    std::vector<Vertex> vertices; // {{rel_x, rel_y, rel_z}, {R, G, B}, {tex_rel_x, tex_rel_x}}
+    std::vector<uint32_t> indices;
 
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
@@ -233,6 +241,7 @@ private:
         createTextureImage();
         createTextureImageView();
         createTextureSampler();
+        loadModel();
         createVertexBuffer();
         createIndexBuffer();
         createUniformBuffers();
@@ -895,9 +904,8 @@ private:
 
     void createTextureImage() {
         int textureHeight, textureWidth, textureChannels;
-        std::string texturePath = "./raws/cube_yellow/body.png";
 
-        stbi_uc* pixels = stbi_load(texturePath.c_str(),
+        stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(),
                                     &textureWidth,
                                     &textureHeight,
                                     &textureChannels,
@@ -906,9 +914,9 @@ private:
         VkDeviceSize imageSize = textureWidth * textureHeight * 4;
 
         if (!pixels) {
-            throw std::runtime_error("Failed to load raw texture from: " + texturePath);
+            throw std::runtime_error("Failed to load raw texture from '" + TEXTURE_PATH + "'");
         } else {
-            std::cout << "Texture image " + texturePath + " was imported with success..." << std::endl;
+            std::cout << "Texture image '" + TEXTURE_PATH + "' was imported with success..." << std::endl;
         }
 
         VkBuffer stagingBuffer;
@@ -1051,7 +1059,7 @@ private:
         imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
         if (vkCreateImage(device, &imageInfo, nullptr, &pImage) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create image!");
+            throw std::runtime_error("Failed to create image");
         }
 
         VkMemoryRequirements memRequirements;
@@ -1063,7 +1071,7 @@ private:
         allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, inputProperties);
 
         if (vkAllocateMemory(device, &allocInfo, nullptr, &pImageMemory) != VK_SUCCESS) {
-            throw std::runtime_error("failed to allocate image memory!");
+            throw std::runtime_error("Failed to allocate image memory");
         }
 
         vkBindImageMemory(device, pImage, pImageMemory, 0);
@@ -1124,6 +1132,51 @@ private:
         }
 
         std::cout << "Texture sampler creation process ends with success..." << std::endl;
+    }
+
+    void loadModel() {
+        tinyobj::attrib_t attribute;
+        std::vector<tinyobj::shape_t> shapes;
+        std::vector<tinyobj::material_t> materials;
+        std::string warn, err;
+
+        if (!tinyobj::LoadObj(&attribute,
+                              &shapes,
+                              &materials,
+                              &warn,
+                              &err,
+                              MODEL_PATH.c_str())) {
+            throw std::runtime_error("Failed to load model from '" + MODEL_PATH + "' because: " + warn + err);
+        }
+
+        std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+
+        for (const auto& shape : shapes) {
+            for (const auto& index : shape.mesh.indices) {
+                Vertex vertex{};
+
+                vertex.pos = {
+                    attribute.vertices[3 * index.vertex_index + 0],
+                    attribute.vertices[3 * index.vertex_index + 1],
+                    attribute.vertices[3 * index.vertex_index + 2]
+                };
+
+                vertex.texCoord = {
+                    attribute.texcoords[2 * index.texcoord_index + 0],
+                    1.0f - attribute.texcoords[2 * index.texcoord_index + 1]
+                };
+
+
+                vertex.color = {1.0f, 1.0f, 1.0f};
+
+                if (uniqueVertices.count(vertex) == 0) {
+                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                    vertices.push_back(vertex);
+                }
+
+                indices.push_back(uniqueVertices[vertex]);
+            }
+        }
     }
 
     void copyBufferToImage(VkBuffer inputBuffer, VkImage inputImage, uint32_t inputWidth, uint32_t inputHeight) {
@@ -1786,7 +1839,7 @@ private:
         VkBuffer vertexBuffers[] = {vertexBuffer};
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+        vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, descriptorSets.data(), 0, nullptr);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 

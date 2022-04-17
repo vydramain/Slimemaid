@@ -1,6 +1,7 @@
 STB_INCLUDE_PATH = ./libraries/stb
+TINYOBJ_INCLUDE_PATH = ./libraries/tinyobjloader
 LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lXrandr -lXi
-CFLAGS = -std=c++17 -O2 -I$(STB_INCLUDE_PATH)
+CFLAGS = -std=c++17 -O2 -I$(STB_INCLUDE_PATH) -I$(TINYOBJ_INCLUDE_PATH)
 
 clean:
 	rm -rf ./build
@@ -13,6 +14,9 @@ prepare_raws: ./raws/*
 
 build:	clean compile_shaders prepare_raws ./source/main.cpp
 	mkdir -p build && g++ $(CFLAGS) -o ./build/Slimemaid ./source/main.cpp $(LDFLAGS) -g
+
+release_build: clean compile_shaders prepare_raws ./source/main.cpp
+		mkdir -p build && g++ $(CFLAGS) -o ./build/Slimemaid ./source/main.cpp $(LDFLAGS) -g -O3
 
 .PHONY: clean compile_shaders prepare_raws test
 
