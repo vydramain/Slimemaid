@@ -1147,6 +1147,8 @@ private:
                               &err,
                               MODEL_PATH.c_str())) {
             throw std::runtime_error("Failed to load model from '" + MODEL_PATH + "' because: " + warn + err);
+        } else {
+            std::cout <<"Model from '" + MODEL_PATH + "' was loaded with success..." << std::endl;
         }
 
         std::unordered_map<Vertex, uint32_t> uniqueVertices{};
