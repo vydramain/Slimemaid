@@ -180,6 +180,7 @@ private:
     VkDeviceMemory depthImageMemory;
     VkImageView depthImageView;
 
+    uint32_t mipLevels;
     VkImage textureImage;
     VkDeviceMemory textureImageMemory;
     VkImageView textureImageView;
@@ -558,7 +559,8 @@ private:
         for (uint32_t i = 0; i < swapChainImages.size(); i++) {
             swapChainImageViews[i] = createImageView(swapChainImages[i],
                                                      swapChainImageFormat,
-                                                     VK_IMAGE_ASPECT_COLOR_BIT);
+                                                     VK_IMAGE_ASPECT_COLOR_BIT,
+                                                     1);
         }
 
         std::cout << "Image view creation process ends with success..." << std::endl;
@@ -863,14 +865,19 @@ private:
 
         createImage(swapChainExtent.width,
                     swapChainExtent.height,
+                    1,
                     depthFormat,
                     VK_IMAGE_TILING_OPTIMAL,
                     VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                     depthImage,
                     depthImageMemory);
-        depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
-        transitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+        depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+        transitionImageLayout(depthImage,
+                              depthFormat,
+                              VK_IMAGE_LAYOUT_UNDEFINED,
+                              VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                              1);
 
         std::cout << "Depth resources creation process ends with success..." << std::endl;
     }
@@ -912,6 +919,7 @@ private:
                                     STBI_rgb_alpha);
 
         VkDeviceSize imageSize = textureWidth * textureHeight * 4;
+        mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(textureWidth, textureHeight)))) + 1;
 
         if (!pixels) {
             throw std::runtime_error("Failed to load raw texture from '" + TEXTURE_PATH + "'");
@@ -937,6 +945,7 @@ private:
 
         createImage(textureWidth,
                     textureHeight,
+                    mipLevels,
                     VK_FORMAT_R8G8B8A8_SRGB,
                     VK_IMAGE_TILING_OPTIMAL,
                     VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -947,7 +956,8 @@ private:
         transitionImageLayout(textureImage,
                               VK_FORMAT_R8G8B8A8_SRGB,
                               VK_IMAGE_LAYOUT_UNDEFINED,
-                              VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+                              VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                              mipLevels);
         copyBufferToImage(stagingBuffer,
                           textureImage,
                           static_cast<size_t>(textureWidth),
@@ -956,7 +966,8 @@ private:
         transitionImageLayout(textureImage,
                               VK_FORMAT_R8G8B8A8_SRGB,
                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                              VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                              VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                              mipLevels);
 
         vkDestroyBuffer(device, stagingBuffer, nullptr);
         vkFreeMemory(device, stagingBufferMemory, nullptr);
@@ -967,7 +978,8 @@ private:
     void transitionImageLayout(VkImage inputImage,
                                VkFormat inputFormat,
                                VkImageLayout inputOldImageLayout,
-                               VkImageLayout inputNewImageLayout) {
+                               VkImageLayout inputNewImageLayout,
+                               uint32_t inputMipLevels) {
         VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
         VkImageMemoryBarrier imageMemoryBarrier{};
@@ -978,7 +990,7 @@ private:
         imageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         imageMemoryBarrier.image = inputImage;
         imageMemoryBarrier.subresourceRange.baseMipLevel = 0;
-        imageMemoryBarrier.subresourceRange.levelCount = 1;
+        imageMemoryBarrier.subresourceRange.levelCount = inputMipLevels;
         imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
         imageMemoryBarrier.subresourceRange.layerCount = 1;
         if (VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL == inputNewImageLayout) {
@@ -1037,6 +1049,7 @@ private:
 
     void createImage(uint32_t inputWidth,
                      uint32_t inputHeight,
+                     uint32_t inputMipLevels,
                      VkFormat inputFormat,
                      VkImageTiling inputTiling,
                      VkImageUsageFlags inputUsage,
@@ -1049,7 +1062,7 @@ private:
         imageInfo.extent.width = inputWidth;
         imageInfo.extent.height = inputHeight;
         imageInfo.extent.depth = 1;
-        imageInfo.mipLevels = 1;
+        imageInfo.mipLevels = inputMipLevels;
         imageInfo.arrayLayers = 1;
         imageInfo.format = inputFormat;
         imageInfo.tiling = inputTiling;
@@ -1078,14 +1091,15 @@ private:
     }
 
     void createTextureImageView() {
-        textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+        textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
 
         std::cout << "Filling texture image view process ends with success..." << std::endl;
     }
 
     VkImageView createImageView(VkImage inputImage,
                                 VkFormat inputFormat,
-                                VkImageAspectFlags inputAspectMask) {
+                                VkImageAspectFlags inputAspectMask,
+                                uint32_t inputMipLevels) {
         VkImageViewCreateInfo viewInfo{};
         viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         viewInfo.image = inputImage;
@@ -1093,7 +1107,7 @@ private:
         viewInfo.format = inputFormat;
         viewInfo.subresourceRange.aspectMask = inputAspectMask;
         viewInfo.subresourceRange.baseMipLevel = 0;
-        viewInfo.subresourceRange.levelCount = 1;
+        viewInfo.subresourceRange.levelCount = inputMipLevels;
         viewInfo.subresourceRange.baseArrayLayer = 0;
         viewInfo.subresourceRange.layerCount = 1;
 
