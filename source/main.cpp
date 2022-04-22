@@ -874,7 +874,7 @@ private:
                 depthImageView,
                 swapChainImageViews[i],
             };
-
+            
             VkFramebufferCreateInfo framebufferCreateInfo{};
             framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferCreateInfo.renderPass = renderPass;
