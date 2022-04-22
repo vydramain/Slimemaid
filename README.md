@@ -14,6 +14,7 @@ List of dependencies:
  - [GLFW 3.3.6](https://www.glfw.org/)
  - [GLM 0.9.9.9](https://github.com/g-truc/glm)
  - [stb collection](https://github.com/nothings/stb)
+ - [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader)
 
 ### Conventions
 
@@ -115,3 +116,4 @@ Additional information about tasks or some important info about application is [
  - [Vulkan expects the data in your structure to be aligned in memory in a specific way](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/html/chap15.html#interfaces-resources-layout)
  - [Vulkan also allows to copy pixels from a `VkBuffer` to an image and the API for this is actually faster on some hardware](https://developer.nvidia.com/vulkan-memory-management)
  - [Nvidia's book: GPUGems](https://developer.nvidia.com/gpugems/gpugems/contributors)
+ - An easy way to find such models is to look for 3D scans on [Sketchfab](https://sketchfab.com/).
