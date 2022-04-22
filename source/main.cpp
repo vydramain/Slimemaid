@@ -968,6 +968,7 @@ private:
         vkFreeMemory(device, stagingBufferMemory, nullptr);
 
         generateMipmaps(textureImage,
+                        VK_FORMAT_R8G8B8A8_SRGB,
                         textureWidth,
                         textureHeight,
                         mipLevels);
@@ -1050,9 +1051,19 @@ private:
     }
 
     void generateMipmaps(VkImage inputImage,
+                         VkFormat inputImageFormat,
                          uint32_t inputTextureWidth,
                          uint32_t inputTextureHeight,
                          uint32_t inputMipLevels) {
+
+        //Check if  image format supports linear blitting
+        VkFormatProperties formatProperties;
+        vkGetPhysicalDeviceFormatProperties(physicalDevice, inputImageFormat, &formatProperties);
+
+        if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) {
+            throw std::runtime_error("Texture image format does not support linear blitting");
+        }
+
         VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
         VkImageMemoryBarrier barrier{};
