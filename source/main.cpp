@@ -967,6 +967,11 @@ private:
         vkDestroyBuffer(device, stagingBuffer, nullptr);
         vkFreeMemory(device, stagingBufferMemory, nullptr);
 
+        generateMipmaps(textureImage,
+                        textureWidth,
+                        textureHeight,
+                        mipLevels);
+
         std::cout << "Texture image transition process ends with success..." << std::endl;
     }
 
