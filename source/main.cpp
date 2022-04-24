@@ -15,6 +15,8 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
+#include "./renderer/memory_handler.cpp"
+
 #include <algorithm> // Necessary for std::clamp
 #include <stdexcept>
 #include <optional>
@@ -874,7 +876,7 @@ private:
                 depthImageView,
                 swapChainImageViews[i],
             };
-            
+
             VkFramebufferCreateInfo framebufferCreateInfo{};
             framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferCreateInfo.renderPass = renderPass;
@@ -1268,7 +1270,7 @@ private:
         VkMemoryAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, inputProperties);
+        allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, inputProperties);
 
         if (vkAllocateMemory(device, &allocInfo, nullptr, &pImageMemory) != VK_SUCCESS) {
             throw std::runtime_error("Failed to allocate image memory");
@@ -1499,7 +1501,9 @@ private:
         VkMemoryAllocateInfo memAllocateInfo{};
         memAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         memAllocateInfo.allocationSize = bufferMemRequirements.size;
-        memAllocateInfo.memoryTypeIndex = findMemoryType(bufferMemRequirements.memoryTypeBits, inputMemoryProperties);
+        memAllocateInfo.memoryTypeIndex = findMemoryType(physicalDevice,
+                                                         bufferMemRequirements.memoryTypeBits,
+                                                         inputMemoryProperties);
 
         if (VK_SUCCESS != vkAllocateMemory(device, &memAllocateInfo, nullptr, &bufferMemory)) {
             throw std::runtime_error("Failed to allocate buffer memory");
@@ -1518,19 +1522,6 @@ private:
         vkCmdCopyBuffer(commandBuffer, inputSrcBuffer, inputDstBuffer, 1, &copyRegion);
 
         endSingleTimeCommands(commandBuffer);
-    }
-
-    uint32_t findMemoryType(uint32_t inputTypeFilter, VkMemoryPropertyFlags inputProperties) {
-        VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
-        vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
-
-        for (uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; i++) {
-            if (inputTypeFilter & (1 << i) && (deviceMemoryProperties.memoryTypes[i].propertyFlags & inputProperties)) {
-                return i;
-            }
-        }
-
-        throw std::runtime_error("Failed to find suitable memory type");
     }
 
     void createDescriptorPool() {
