@@ -10,6 +10,9 @@ This file has heading of allocation functions for Vulkan API.
 ------------------------------------
 */
 
+#ifndef SM_VULKAN_MEMORY_HANDLER_
+#define SM_VULKAN_MEMORY_HANDLER_
+
 #include <vulkan/vulkan.h>
 
 #include <cstdint>              // Necessary for uint32_t
@@ -38,3 +41,5 @@ uint32_t findMemoryType(VkPhysicalDevice& inputPhysicalDevice,
 
   throw std::runtime_error("Failed to find suitable memory type");
 }
+
+#endif
