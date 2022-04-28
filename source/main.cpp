@@ -31,6 +31,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "./renderer/structs/queue_family_indices.hpp"
 #include "./renderer/structs/vertex.hpp"
 #include "./renderer/allocator.hpp"
 #include "./renderer/debug_messenger.hpp"
@@ -54,15 +55,6 @@ const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif
-
-struct QueueFamilyIndices {
-  std::optional<uint32_t> graphicsFamily;
-  std::optional<uint32_t> presentFamily;
-
-  bool isComplete() {
-    return graphicsFamily.has_value() && presentFamily.has_value();
-  }
-};
 
 struct SwapChainSupportDetails {
   VkSurfaceCapabilitiesKHR capabilities;
