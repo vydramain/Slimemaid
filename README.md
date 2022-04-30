@@ -105,7 +105,8 @@ And do not forget execute shell file to set up system environment variables:
 
 ### Footnote
 If you have trouble with compiling and launching project check is your [development environment](https://vulkan-tutorial.com/en/Development_environment#page_Linux) set up.
-Some of this packages for RPM-based distributions can be deprecated or have different names. Check [pkgs.org](https://pkgs.org).
+Some of this packages for RPM-based distributions can be deprecated or have different names. Check [pkgs.org](https://pkgs.org) or [rpmfind.net](https://rpmfind.net/).
+If you have troubles with finding package you can always compile it for your system and build to [rpm](https://rpm.org/) [package](https://rpm-packaging-guide.github.io/) for installation.
 
 # Special info
 Additional information about tasks or some important info about application is [here](./NOTES.md).
