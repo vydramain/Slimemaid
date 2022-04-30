@@ -34,6 +34,7 @@
 #include "./renderer/allocator.hpp"
 #include "./renderer/debug_messenger.hpp"
 #include "./renderer/memory_handler.hpp"
+#include "./renderer/structs/swap_chain_support_details.hpp"
 #include "./renderer/structs/queue_family_indices.hpp"
 #include "./renderer/structs/vertex.hpp"
 
@@ -55,12 +56,6 @@ const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif
-
-struct swap_chain_support_details {
-  VkSurfaceCapabilitiesKHR capabilities;
-  std::vector<VkSurfaceFormatKHR> formats;
-  std::vector<VkPresentModeKHR> presentModes;
-};
 
 struct uniform_buffer_object {
   alignas(16) glm::mat4 model;
@@ -492,8 +487,7 @@ private:
   }
 
   void createSwapChain() {
-    swap_chain_support_details swapChainSupport =
-        querySwapChainSupport(physicalDevice);
+    swap_chain_support_details swapChainSupport = querySwapChainSupport(physicalDevice, surface);
 
     VkSurfaceFormatKHR surfaceFormat =
         chooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -1727,33 +1721,6 @@ private:
     return score;
   }
 
-  swap_chain_support_details querySwapChainSupport(VkPhysicalDevice device) {
-    swap_chain_support_details details;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface,
-                                              &details.capabilities);
-
-    uint32_t formatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,
-                                         nullptr);
-    if (0 != formatCount) {
-      details.formats.resize(formatCount);
-      vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,
-                                           details.formats.data());
-    }
-
-    uint32_t presentModeCount;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
-                                              &presentModeCount, nullptr);
-
-    if (0 != presentModeCount) {
-      details.presentModes.resize(presentModeCount);
-      vkGetPhysicalDeviceSurfacePresentModesKHR(
-          device, surface, &presentModeCount, details.presentModes.data());
-    }
-
-    return details;
-  }
-
   VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
     for (const auto &availableFormat : availableFormats) {
       if (VK_FORMAT_B8G8R8A8_SRGB == availableFormat.format &&
@@ -1821,8 +1788,7 @@ private:
     bool swapChainAdequate = false;
 
     if (extensionsSupported) {
-      swap_chain_support_details swapChainSupport =
-          querySwapChainSupport(device);
+      swap_chain_support_details swapChainSupport = querySwapChainSupport(device, surface);
       swapChainAdequate = !swapChainSupport.formats.empty() &&
                           !swapChainSupport.presentModes.empty();
     }
