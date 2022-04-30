@@ -34,6 +34,7 @@
 #include "./renderer/allocator.hpp"
 #include "./renderer/debug_messenger.hpp"
 #include "./renderer/memory_handler.hpp"
+#include "./renderer/structs/uniform_buffer_object.hpp"
 #include "./renderer/structs/swap_chain_support_details.hpp"
 #include "./renderer/structs/queue_family_indices.hpp"
 #include "./renderer/structs/vertex.hpp"
@@ -56,12 +57,6 @@ const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif
-
-struct uniform_buffer_object {
-  alignas(16) glm::mat4 model;
-  alignas(16) glm::mat4 view;
-  alignas(16) glm::mat4 proj;
-};
 
 namespace std {
 template <> struct hash<Vertex> {
