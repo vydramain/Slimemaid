@@ -21,7 +21,7 @@ This file has heading of allocation functions for Vulkan API.
 Stuct keep uint32_t as optional value for graphics and present family.
 ------------
 */
-struct QueueFamilyIndices {
+struct queue_family_indices {
   std::optional<uint32_t> graphicsFamily;
   std::optional<uint32_t> presentFamily;
 

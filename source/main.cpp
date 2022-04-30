@@ -31,11 +31,11 @@
 #include <stdexcept>
 #include <vector>
 
-#include "./renderer/structs/queue_family_indices.hpp"
-#include "./renderer/structs/vertex.hpp"
 #include "./renderer/allocator.hpp"
 #include "./renderer/debug_messenger.hpp"
 #include "./renderer/memory_handler.hpp"
+#include "./renderer/structs/queue_family_indices.hpp"
+#include "./renderer/structs/vertex.hpp"
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -56,13 +56,13 @@ const bool enableValidationLayers = false;
 const bool enableValidationLayers = true;
 #endif
 
-struct SwapChainSupportDetails {
+struct swap_chain_support_details {
   VkSurfaceCapabilitiesKHR capabilities;
   std::vector<VkSurfaceFormatKHR> formats;
   std::vector<VkPresentModeKHR> presentModes;
 };
 
-struct UniformBufferObject {
+struct uniform_buffer_object {
   alignas(16) glm::mat4 model;
   alignas(16) glm::mat4 view;
   alignas(16) glm::mat4 proj;
@@ -79,7 +79,7 @@ template <> struct hash<Vertex> {
 };
 } // namespace std
 
-class SlimeApplication {
+class vulkan_instance {
 private:
   GLFWwindow *window;
 
@@ -101,9 +101,12 @@ private:
   std::vector<VkFramebuffer> swapChainFramebuffers;
 
   VkRenderPass renderPass;
-  VkDescriptorSetLayout descriptorSetLayout;
   VkPipelineLayout pipelineLayout;
   VkPipeline graphicsPipeline;
+
+  VkDescriptorPool descriptorPool;
+  VkDescriptorSetLayout descriptorSetLayout;
+  std::vector<VkDescriptorSet> descriptorSets;
 
   VkCommandPool commandPool;
 
@@ -128,9 +131,6 @@ private:
 
   std::vector<VkBuffer> uniformBuffers;
   std::vector<VkDeviceMemory> uniformBuffersMemory;
-
-  VkDescriptorPool descriptorPool;
-  std::vector<VkDescriptorSet> descriptorSets;
 
   std::vector<VkCommandBuffer> commandBuffers;
 
@@ -162,7 +162,7 @@ private:
   static void framebufferResizeCallback(GLFWwindow *window, int width,
                                         int height) {
     auto app =
-        reinterpret_cast<SlimeApplication *>(glfwGetWindowUserPointer(window));
+        reinterpret_cast<vulkan_instance *>(glfwGetWindowUserPointer(window));
     app->framebufferResized = true;
   }
 
@@ -346,20 +346,6 @@ private:
     }
   }
 
-  void fillDebugMessengerCreateInfoEXT(
-      VkDebugUtilsMessengerCreateInfoEXT &createInfo) {
-    createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    createInfo.messageSeverity =
-        VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-        VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-    createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                             VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    createInfo.pfnUserCallback = debugCallback;
-    createInfo.pUserData = nullptr; // Optional
-  }
 
   void setupDebugMessenger() {
     std::cout << "Enable validation layers flag is: " << enableValidationLayers
@@ -451,7 +437,7 @@ private:
   }
 
   void createLogicalDevice() {
-    QueueFamilyIndices transferIndices =
+    queue_family_indices transferIndices =
         findTransferQueueFamilies(physicalDevice);
 
     std::vector<VkDeviceQueueCreateInfo> transferQueueCreateInfos;
@@ -508,7 +494,7 @@ private:
   }
 
   void createSwapChain() {
-    SwapChainSupportDetails swapChainSupport =
+    swap_chain_support_details swapChainSupport =
         querySwapChainSupport(physicalDevice);
 
     VkSurfaceFormatKHR surfaceFormat =
@@ -534,14 +520,14 @@ private:
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
-    uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(),
-                                     indices.presentFamily.value()};
+    queue_family_indices indices = findQueueFamilies(physicalDevice);
+    uint32_t queue_family_indices[] = {indices.graphicsFamily.value(),
+                                       indices.presentFamily.value()};
 
     if (indices.graphicsFamily != indices.presentFamily) {
       createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
       createInfo.queueFamilyIndexCount = 2;
-      createInfo.pQueueFamilyIndices = queueFamilyIndices;
+      createInfo.pQueueFamilyIndices = queue_family_indices;
     } else {
       createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
       createInfo.queueFamilyIndexCount = 0;     // Optional
@@ -923,14 +909,15 @@ private:
   }
 
   void createCommandPool() {
-    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
+    queue_family_indices queue_family_indices =
+        findQueueFamilies(physicalDevice);
 
     VkCommandPoolCreateInfo commandPoolCreateInfo{};
     commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     commandPoolCreateInfo.flags =
         VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     commandPoolCreateInfo.queueFamilyIndex =
-        queueFamilyIndices.graphicsFamily.value();
+        queue_family_indices.graphicsFamily.value();
 
     if (VK_SUCCESS != vkCreateCommandPool(device, &commandPoolCreateInfo,
                                           nullptr, &commandPool)) {
@@ -1423,7 +1410,7 @@ private:
   }
 
   void createUniformBuffers() {
-    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+    VkDeviceSize bufferSize = sizeof(uniform_buffer_object);
 
     uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
     uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
@@ -1534,7 +1521,7 @@ private:
       VkDescriptorBufferInfo bufferInfo{};
       bufferInfo.buffer = uniformBuffers[i];
       bufferInfo.offset = 0;
-      bufferInfo.range = sizeof(UniformBufferObject);
+      bufferInfo.range = sizeof(uniform_buffer_object);
 
       VkDescriptorImageInfo imageInfo{};
       imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -1614,16 +1601,6 @@ private:
 
     std::cout << "Sync objects creation process ends with success..."
               << std::endl;
-  }
-
-  static VKAPI_ATTR VkBool32 VKAPI_CALL
-  debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                VkDebugUtilsMessageTypeFlagsEXT messageType,
-                const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-                void *pUserData) {
-    std::cerr << pCallbackData->pMessage << '\n';
-
-    return VK_FALSE;
   }
 
   static std::vector<char> readFile(const std::string &filename) {
@@ -1755,8 +1732,8 @@ private:
     return score;
   }
 
-  QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
-    QueueFamilyIndices indices;
+  queue_family_indices findQueueFamilies(VkPhysicalDevice device) {
+    queue_family_indices indices;
 
     uint32_t queueFamilyCount = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
@@ -1786,8 +1763,8 @@ private:
     return indices;
   }
 
-  QueueFamilyIndices findTransferQueueFamilies(VkPhysicalDevice device) {
-    QueueFamilyIndices indices;
+  queue_family_indices findTransferQueueFamilies(VkPhysicalDevice device) {
+    queue_family_indices indices;
 
     uint32_t queueFamilyCount = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
@@ -1817,8 +1794,8 @@ private:
     return indices;
   }
 
-  SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) {
-    SwapChainSupportDetails details;
+  swap_chain_support_details querySwapChainSupport(VkPhysicalDevice device) {
+    swap_chain_support_details details;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface,
                                               &details.capabilities);
 
@@ -1844,8 +1821,7 @@ private:
     return details;
   }
 
-  VkSurfaceFormatKHR chooseSwapSurfaceFormat(
-      const std::vector<VkSurfaceFormatKHR> &availableFormats) {
+  VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
     for (const auto &availableFormat : availableFormats) {
       if (VK_FORMAT_B8G8R8A8_SRGB == availableFormat.format &&
           VK_COLORSPACE_SRGB_NONLINEAR_KHR == availableFormat.colorSpace) {
@@ -1855,8 +1831,7 @@ private:
     return availableFormats[0];
   }
 
-  VkPresentModeKHR chooseSwapPresentMode(
-      const std::vector<VkPresentModeKHR> &availablePresentModes) {
+  VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes) {
     for (const auto &availablePresentMode : availablePresentModes) {
       if (VK_PRESENT_MODE_MAILBOX_KHR == availablePresentMode) {
         return availablePresentMode;
@@ -1908,12 +1883,13 @@ private:
   }
 
   bool isDeviceSuitable(VkPhysicalDevice device) {
-    QueueFamilyIndices indices = findQueueFamilies(device);
+    queue_family_indices indices = findQueueFamilies(device);
     bool extensionsSupported = checkDeviceExtensionSupport(device);
     bool swapChainAdequate = false;
 
     if (extensionsSupported) {
-      SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
+      swap_chain_support_details swapChainSupport =
+          querySwapChainSupport(device);
       swapChainAdequate = !swapChainSupport.formats.empty() &&
                           !swapChainSupport.presentModes.empty();
     }
@@ -2061,7 +2037,7 @@ private:
                      currentTime - startTime)
                      .count();
 
-    UniformBufferObject ubo{};
+    uniform_buffer_object ubo{};
     ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(20.0f),
                             glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.view =
@@ -2090,7 +2066,7 @@ public:
 };
 
 int main() {
-  SlimeApplication app;
+  vulkan_instance app;
 
   try {
     app.run();
