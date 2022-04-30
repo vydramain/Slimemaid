@@ -120,8 +120,7 @@ private:
   VkImageView textureImageView;
   VkSampler textureSampler;
 
-  std::vector<Vertex>
-      vertices; // {{rel_x, rel_y, rel_z}, {R, G, B}, {tex_rel_x, tex_rel_x}}
+  std::vector<Vertex> vertices; // {{rel_x, rel_y, rel_z}, {R, G, B}, {tex_rel_x, tex_rel_x}}
   std::vector<uint32_t> indices;
 
   VkBuffer vertexBuffer;
@@ -437,8 +436,7 @@ private:
   }
 
   void createLogicalDevice() {
-    queue_family_indices transferIndices =
-        findTransferQueueFamilies(physicalDevice);
+    queue_family_indices transferIndices = findTransferQueueFamilies(physicalDevice, surface);
 
     std::vector<VkDeviceQueueCreateInfo> transferQueueCreateInfos;
     std::set<uint32_t> transferUniqueQueueFamilies = {
@@ -520,7 +518,7 @@ private:
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    queue_family_indices indices = findQueueFamilies(physicalDevice);
+    queue_family_indices indices = findQueueFamilies(physicalDevice, surface);
     uint32_t queue_family_indices[] = {indices.graphicsFamily.value(),
                                        indices.presentFamily.value()};
 
@@ -910,7 +908,7 @@ private:
 
   void createCommandPool() {
     queue_family_indices queue_family_indices =
-        findQueueFamilies(physicalDevice);
+        findQueueFamilies(physicalDevice, surface);
 
     VkCommandPoolCreateInfo commandPoolCreateInfo{};
     commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -1294,13 +1292,10 @@ private:
     std::vector<tinyobj::material_t> materials;
     std::string warn, err;
 
-    if (!tinyobj::LoadObj(&attribute, &shapes, &materials, &warn, &err,
-                          MODEL_PATH.c_str())) {
-      throw std::runtime_error("Failed to load model from '" + MODEL_PATH +
-                               "' because: " + warn + err);
+    if (!tinyobj::LoadObj(&attribute, &shapes, &materials, &warn, &err, MODEL_PATH.c_str())) {
+      throw std::runtime_error("Failed to load model from '" + MODEL_PATH + "' because: " + warn + err);
     } else {
-      std::cout << "Model from '" + MODEL_PATH + "' was loaded with success..."
-                << std::endl;
+      std::cout << "Model from '" + MODEL_PATH + "' was loaded with success..." << std::endl;
     }
 
     std::unordered_map<Vertex, uint32_t> uniqueVertices{};
@@ -1732,68 +1727,6 @@ private:
     return score;
   }
 
-  queue_family_indices findQueueFamilies(VkPhysicalDevice device) {
-    queue_family_indices indices;
-
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
-                                             nullptr);
-
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
-                                             queueFamilies.data());
-
-    int i = 0;
-    for (const auto &queueFamily : queueFamilies) {
-      if (indices.isComplete()) {
-        break;
-      }
-      if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-        indices.graphicsFamily = i;
-      }
-      VkBool32 presentSupport = false;
-      vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-      if (presentSupport) {
-        indices.presentFamily = i;
-      }
-
-      i++;
-    }
-
-    return indices;
-  }
-
-  queue_family_indices findTransferQueueFamilies(VkPhysicalDevice device) {
-    queue_family_indices indices;
-
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
-                                             nullptr);
-
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount,
-                                             queueFamilies.data());
-
-    int i = 0;
-    for (const auto &queueFamily : queueFamilies) {
-      if (indices.isComplete()) {
-        break;
-      }
-      if (queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT) {
-        indices.graphicsFamily = i;
-      }
-      VkBool32 presentSupport = false;
-      vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-      if (presentSupport) {
-        indices.presentFamily = i;
-      }
-
-      i++;
-    }
-
-    return indices;
-  }
-
   swap_chain_support_details querySwapChainSupport(VkPhysicalDevice device) {
     swap_chain_support_details details;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface,
@@ -1883,7 +1816,7 @@ private:
   }
 
   bool isDeviceSuitable(VkPhysicalDevice device) {
-    queue_family_indices indices = findQueueFamilies(device);
+    queue_family_indices indices = findQueueFamilies(device, surface);
     bool extensionsSupported = checkDeviceExtensionSupport(device);
     bool swapChainAdequate = false;
 
