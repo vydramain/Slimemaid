@@ -19,7 +19,6 @@ This file has heading of allocation functions for Vulkan API.
 
 #include <vulkan/vulkan.h>
 
-
 /*
 ------------
 Function gets current Vulkan instance, pointers to debug create info struct, memory allocator, debug messenger as field

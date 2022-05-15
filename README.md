@@ -13,6 +13,7 @@ List of dependencies:
  - [VulkanSDK 1.3.204.1](https://vulkan.lunarg.com/sdk/home)
  - [GLFW 3.3.6](https://www.glfw.org/)
  - [GLM 0.9.9.9](https://github.com/g-truc/glm)
+ - [spdlog 1.10.0](https://github.com/gabime/spdlog)
  - [stb collection](https://github.com/nothings/stb)
  - [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader)
 
@@ -77,6 +78,17 @@ It is a header-only library that can be installed from the libglm-dev or glm-dev
 or
 ```console
 # sudo dnf install glm-devel
+```
+
+#### SPDLOG
+We use simple, very fast, header-only/compiled, C++ logging library.
+
+```console
+# sudo apt install libspdlog-dev
+```
+or
+```console
+# sudo dnf install spdlog
 ```
 
 #### VulkanSDK

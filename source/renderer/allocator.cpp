@@ -10,18 +10,8 @@ This file has heading of allocation functions for Vulkan API.
 ------------------------------------
 */
 
-#include <vulkan/vulkan.h>
+#include "renderer/allocator.hpp"
 
-#include <cstdint> // Necessary for uint32_t
-
-#include "memory_handler.hpp"
-
-/*
-------------
-Create image function.
-This function declare object in graphics device and allocating memory for it.
-------------
-*/
 void createImage(uint32_t inputWidth,
                  uint32_t inputHeight,
                  uint32_t inputMipLevels,

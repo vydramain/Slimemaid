@@ -1,7 +1,7 @@
 /*
 ------------------------------------
 
-Slimemaid Source Code (25.04.2022)
+Slimemaid Source Code (08.05.2022)
 
 This file is part of Slimemaid Source Code.
 
@@ -27,19 +27,7 @@ Memory types are determined depending by physical device featrues and type filte
 */
 uint32_t findMemoryType(VkPhysicalDevice& inputPhysicalDevice,
                         uint32_t inputTypeFilter,
-                        VkMemoryPropertyFlags inputProperties) {
-  VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
-  vkGetPhysicalDeviceMemoryProperties(inputPhysicalDevice, &deviceMemoryProperties);
-
-  for (uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; i++) {
-    if (inputTypeFilter & (1 << i) &&
-        (deviceMemoryProperties.memoryTypes[i].propertyFlags &
-         inputProperties)) {
-      return i;
-    }
-  }
-
-  throw std::runtime_error("Failed to find suitable memory type");
-}
-
+                        VkMemoryPropertyFlags inputProperties);
+                        
 #endif
+

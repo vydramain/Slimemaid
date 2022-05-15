@@ -1,7 +1,7 @@
 /*
 ------------------------------------
 
-Slimemaid Source Code (28.04.2022)
+Slimemaid Source Code (12.05.2022)
 
 This file is part of Slimemaid Source Code.
 
@@ -25,7 +25,8 @@ This file has heading of allocation functions for Vulkan API.
 
 /*
 ------------
-Struct describe dot in virtual Vulkan space by position vector and color vector (RGB) and texture coordinate vector.
+Struct describe dot in virtual Vulkan space by position vector
+and color vector (RGB) and texture coordinate vector.
 Struct has two static methods:
  - getBindingDescription(): VkVertexInputBindingDescription
  - getAttributeDescriptions(): array<VkVertexInputAttributeDescription, 3>
@@ -50,9 +51,11 @@ struct Vertex {
     return bindingDescription;
   }
 
+
   /*
   ------------
-  Static method create and return array for each vertex attribure. Each attribure of array is vertex vector description.
+  Static method create and return array for each vertex attribure.
+  Each attribure of array is vertex vector description.
   ------------
   */
   static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
@@ -76,8 +79,10 @@ struct Vertex {
     return attributeDescriptions;
   }
 
-  bool operator==(const Vertex &other) const {
-    return pos == other.pos && color == other.color && texCoord == other.texCoord;
+  bool operator== (const Vertex& other) const {
+    return pos == other.pos &&
+        color == other.color &&
+        texCoord == other.texCoord;
   }
 };
 
@@ -92,3 +97,4 @@ namespace std {
 }
 
 #endif
+
