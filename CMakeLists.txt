@@ -16,7 +16,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -Wextra -pedantic -Wzero-as-null-pointer-constant -Winit-self -Wswitch-default -Wfloat-equal -Wno-unused-parameter ${LDFLAGS} -fPIC -march=native -I${STBI_INCLUDE_DIR} -I${TOL_INCLUDE_DIR}")
 
 
-
 set(PROJECT_HEADERS_DIR ${PROJECT_SOURCE_DIR}/include)
 set(PROJECT_SOURCES_DIR ${PROJECT_SOURCE_DIR}/source)
 

@@ -7,7 +7,7 @@ compile_shaders: ./shaders/*
 	./compile_shaders.sh
 
 prepare_raws: ./raws/*
-	cp -r ./raws ./cmake-build-debug/raws
+	cp -r ./raws ./cmake-build-debug/
 
 build:
 	cd cmake-build-debug;make
