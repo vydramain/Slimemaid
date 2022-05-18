@@ -13,7 +13,7 @@ include_directories(SYSTEM ${TOL_INCLUDE_DIR})
 set(LDFLAGS "-lglfw -lvulkan -ldl -lpthread -lX11 -lXrandr -lXi")
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -Werror -Wextra -pedantic -Wzero-as-null-pointer-constant -Winit-self -Wswitch-default -Wfloat-equal -Wno-unused-parameter ${LDFLAGS} -fPIC -march=native -I${STBI_INCLUDE_DIR} -I${TOL_INCLUDE_DIR}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -Wextra -pedantic -Wzero-as-null-pointer-constant -Winit-self -Wswitch-default -Wfloat-equal -Wno-unused-parameter ${LDFLAGS} -fPIC -march=native -I${STBI_INCLUDE_DIR} -I${TOL_INCLUDE_DIR}")
 
 
 
@@ -35,6 +35,6 @@ install(FILES ${HEADERS} DESTINATION include/${PROJECT_NAME})
 
 
 # Add linting before compilation
- include(CppLint)
- ADD_STYLE_CHECK_TARGET(lint ${PROJECT_NAME} ${PROJECT_HEADERS_DIR} ${PROJECT_SOURCES_DIR})
- add_dependencies(${PROJECT_NAME} lint)
+# include(CppLint)
+# ADD_STYLE_CHECK_TARGET(lint ${PROJECT_NAME} ${PROJECT_HEADERS_DIR} ${PROJECT_SOURCES_DIR})
+# add_dependencies(${PROJECT_NAME} lint)
