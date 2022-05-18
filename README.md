@@ -10,6 +10,7 @@ This version wrote on Linux and adapted only for this platform. Try it on MacOS 
 List of dependencies:
  - [gcc (GCC) 11.2](https://gcc.gnu.org/gcc-11/)
  - [GNU Make 4.3](https://www.gnu.org/software/make/)
+ - [CMake](https://cmake.org/)
  - [VulkanSDK 1.3.204.1](https://vulkan.lunarg.com/sdk/home)
  - [GLFW 3.3.6](https://www.glfw.org/)
  - [GLM 0.9.9.9](https://github.com/g-truc/glm)
