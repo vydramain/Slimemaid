@@ -10,9 +10,11 @@ This version wrote on Linux and adapted only for this platform. Try it on MacOS 
 List of dependencies:
  - [gcc (GCC) 11.2](https://gcc.gnu.org/gcc-11/)
  - [GNU Make 4.3](https://www.gnu.org/software/make/)
+ - [CMake 3.22.2](https://cmake.org/)
  - [VulkanSDK 1.3.204.1](https://vulkan.lunarg.com/sdk/home)
  - [GLFW 3.3.6](https://www.glfw.org/)
  - [GLM 0.9.9.9](https://github.com/g-truc/glm)
+ - [spdlog 1.10.0](https://github.com/gabime/spdlog)
  - [stb collection](https://github.com/nothings/stb)
  - [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader)
 
@@ -79,6 +81,17 @@ or
 # sudo dnf install glm-devel
 ```
 
+#### SPDLOG
+We use simple, very fast, header-only/compiled, C++ logging library.
+
+```console
+# sudo apt install libspdlog-dev
+```
+or
+```console
+# sudo dnf install spdlog
+```
+
 #### VulkanSDK
 I would recommend you to download [SDK Tarball](https://sdk.lunarg.com/sdk/download/1.3.204.1/linux/vulkansdk-linux-x86_64-1.3.204.1.tar.gz) version. In the project absolute ways used for the compiling. And correct system position is necessary for correct work.
 But if you don't want to use you should change base SDK location variables.
@@ -105,7 +118,8 @@ And do not forget execute shell file to set up system environment variables:
 
 ### Footnote
 If you have trouble with compiling and launching project check is your [development environment](https://vulkan-tutorial.com/en/Development_environment#page_Linux) set up.
-Some of this packages for RPM-based distributions can be deprecated or have different names. Check [pkgs.org](https://pkgs.org).
+Some of this packages for RPM-based distributions can be deprecated or have different names. Check [pkgs.org](https://pkgs.org) or [rpmfind.net](https://rpmfind.net/).
+If you have troubles with finding package you can always compile it for your system and build to [rpm](https://rpm.org/) [package](https://rpm-packaging-guide.github.io/) for installation.
 
 # Special info
 Additional information about tasks or some important info about application is [here](./NOTES.md).

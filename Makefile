@@ -1,24 +1,31 @@
-STB_INCLUDE_PATH = ./libraries/stb
-TINYOBJ_INCLUDE_PATH = ./libraries/tinyobjloader
-LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lXrandr -lXi
-CFLAGS = -std=c++17 -I$(STB_INCLUDE_PATH) -I$(TINYOBJ_INCLUDE_PATH)
+all: clean reload compile_shaders prepare_raws build exec
 
-clean:
-	rm -rf ./build
+mkdir_build:
+	[ -d ./cmake-build-debug ] | mkdir -p cmake-build-debug
 
 compile_shaders: ./shaders/*
 	./compile_shaders.sh
 
 prepare_raws: ./raws/*
-	cp -r ./raws ./build/raws
+	cp -r ./raws ./cmake-build-debug/
 
-build:	clean compile_shaders prepare_raws ./source/main.cpp
-	mkdir -p build && g++ $(CFLAGS) -o ./build/Slimemaid ./source/main.cpp $(LDFLAGS) -g -O2
+build:
+	cd cmake-build-debug;make
 
-release_build: clean compile_shaders prepare_raws ./source/main.cpp
-		mkdir -p build && g++ $(CFLAGS) -o ./build/Slimemaid ./source/main.cpp $(LDFLAGS) -O8
+exec:
+	cd cmake-build-debug;./Slimemaid
 
-.PHONY: clean compile_shaders prepare_raws test
+clean:
+	rm -rf cmake-build-debug
 
-test:	build
-	clear && cd ./build && ./Slimemaid
+reload: mkdir_build
+	cd cmake-build-debug;cmake ..
+
+fast_build:
+	cd cmake-build-debug;make
+
+test:
+	cd cmake-build-debug;make test
+
+run: fast_build exec
+
