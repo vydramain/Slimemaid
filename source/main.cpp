@@ -31,9 +31,9 @@
 #include <map>
 #include <set>
 
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
-const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+#include "components/subs/SubRendererParams.hpp"
+
+const SubRendererParams rendererParams;
 
 const std::string MODEL_PATH = "raws/viking_room/viking_room.obj";
 const std::string TEXTURE_PATH = "raws/viking_room/viking_room.png";
@@ -148,7 +148,7 @@ void DestroyDebugUtilsMessengerEXT(
   }
 }
 
-class SlimeApplication {
+class SmVulkanRenderer {
  private:
   GLFWwindow* window;
 
@@ -220,14 +220,14 @@ class SlimeApplication {
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+    window = glfwCreateWindow(*rendererParams.get_width(), *rendererParams.get_height(), "Vulkan", nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
     std::cout << "GLFW initialization process ends with success..." << std::endl;
   }
 
   static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-    auto app = reinterpret_cast<SlimeApplication*>(glfwGetWindowUserPointer(window));
+    auto app = reinterpret_cast<SmVulkanRenderer*>(glfwGetWindowUserPointer(window));
     app->framebufferResized = true;
   }
 
@@ -307,7 +307,7 @@ class SlimeApplication {
     vkDestroyImage(device, textureImage, nullptr);
     vkFreeMemory(device, textureImageMemory, nullptr);
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < rendererParams.get_max_frames_in_flight(); i++) {
       vkDestroyBuffer(device, uniformBuffers[i], nullptr);
       vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
     }
@@ -319,7 +319,7 @@ class SlimeApplication {
     vkDestroyBuffer(device, vertexBuffer, nullptr);
     vkFreeMemory(device, vertexBufferMemory, nullptr);
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < rendererParams.get_max_frames_in_flight(); i++) {
       vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
       vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
       vkDestroyFence(device, inFlightFences[i], nullptr);
@@ -1463,10 +1463,10 @@ class SlimeApplication {
   void createUniformBuffers() {
     VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-    uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-    uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+    uniformBuffers.resize(rendererParams.get_max_frames_in_flight());
+    uniformBuffersMemory.resize(rendererParams.get_max_frames_in_flight());
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < rendererParams.get_max_frames_in_flight(); i++) {
       createBuffer(bufferSize,
                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -1536,15 +1536,15 @@ class SlimeApplication {
   void createDescriptorPool() {
     std::array<VkDescriptorPoolSize, 2> descriptorPoolSizes{};
     descriptorPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptorPoolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    descriptorPoolSizes[0].descriptorCount = static_cast<uint32_t>(rendererParams.get_max_frames_in_flight());
     descriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptorPoolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    descriptorPoolSizes[1].descriptorCount = static_cast<uint32_t>(rendererParams.get_max_frames_in_flight());
 
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
     descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     descriptorPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(descriptorPoolSizes.size());
     descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSizes.data();
-    descriptorPoolCreateInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    descriptorPoolCreateInfo.maxSets = static_cast<uint32_t>(rendererParams.get_max_frames_in_flight());
 
     if (VK_SUCCESS != vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, nullptr, &descriptorPool)) {
       throw std::runtime_error("Failed to create descriptor pool for uniform buffers");
@@ -1554,19 +1554,19 @@ class SlimeApplication {
   }
 
   void createDescriptorSets() {
-    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> layouts(rendererParams.get_max_frames_in_flight(), descriptorSetLayout);
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = descriptorPool;
-    allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    allocInfo.descriptorSetCount = static_cast<uint32_t>(rendererParams.get_max_frames_in_flight());
     allocInfo.pSetLayouts = layouts.data();
 
-    descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+    descriptorSets.resize(rendererParams.get_max_frames_in_flight());
     if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
       throw std::runtime_error("Failed to allocate descriptor sets for uniform buffers");
     }
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < rendererParams.get_max_frames_in_flight(); i++) {
       VkDescriptorBufferInfo bufferInfo{};
       bufferInfo.buffer = uniformBuffers[i];
       bufferInfo.offset = 0;
@@ -1605,7 +1605,7 @@ class SlimeApplication {
   }
 
   void createCommandBuffers() {
-    commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+    commandBuffers.resize(rendererParams.get_max_frames_in_flight());
 
     VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
     commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -1621,9 +1621,9 @@ class SlimeApplication {
   }
 
   void createSyncObjects() {
-    imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+    imageAvailableSemaphores.resize(rendererParams.get_max_frames_in_flight());
+    renderFinishedSemaphores.resize(rendererParams.get_max_frames_in_flight());
+    inFlightFences.resize(rendererParams.get_max_frames_in_flight());
 
     VkSemaphoreCreateInfo semaphoreCreateInfo{};
     semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -1632,7 +1632,7 @@ class SlimeApplication {
     fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < rendererParams.get_max_frames_in_flight(); i++) {
       if (VK_SUCCESS != vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &imageAvailableSemaphores[i]) ||
           VK_SUCCESS != vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &renderFinishedSemaphores[i]) ||
           VK_SUCCESS != vkCreateFence(device, &fenceCreateInfo, nullptr, &inFlightFences[i])) {
@@ -1999,7 +1999,7 @@ class SlimeApplication {
       throw std::runtime_error("Failed to preset swap chain image");
     }
 
-    currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+    currentFrame = (currentFrame + 1) % rendererParams.get_max_frames_in_flight();
   }
 
   void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
@@ -2078,7 +2078,7 @@ class SlimeApplication {
 };
 
 int main() {
-  SlimeApplication app;
+  SmVulkanRenderer app;
 
   try {
     app.run();
