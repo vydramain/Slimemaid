@@ -1,5 +1,8 @@
 all: clean reload compile_shaders prepare_raws build exec
 
+clean:
+	rm -rf cmake-build-debug
+
 mkdir_build:
 	[ -d ./cmake-build-debug ] | mkdir -p cmake-build-debug
 
@@ -14,9 +17,6 @@ build:
 
 exec:
 	cd cmake-build-debug;./Slimemaid
-
-clean:
-	rm -rf cmake-build-debug
 
 reload: mkdir_build
 	cd cmake-build-debug;cmake ..
