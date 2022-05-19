@@ -33,6 +33,7 @@
 #include <map>
 #include <set>
 
+#include "components/structs/UniformBufferObject.hpp"
 #include "components/structs/QueueFamilyIndices.hpp"
 #include "components/structs/SwapChainSupportDetails.hpp"
 #include "components/structs/Vertex.hpp"
@@ -57,11 +58,6 @@ const bool enableValidationLayers = false;
 const bool enableValidationLayers = true;
 #endif
 
-struct UniformBufferObject {
-  alignas(16) glm::mat4 model;
-  alignas(16) glm::mat4 view;
-  alignas(16) glm::mat4 proj;
-};
 
 VkResult CreateDebugUtilsMessengerEXT(
     VkInstance instance,
