@@ -1,3 +1,5 @@
+#include <vulkan/vulkan.h>
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -32,6 +34,7 @@
 #include <set>
 
 #include "components/structs/QueueFamilyIndices.hpp"
+#include "components/structs/SwapChainSupportDetails.hpp"
 #include "components/structs/Vertex.hpp"
 #include "components/subs/SubRendererParams.hpp"
 
@@ -53,12 +56,6 @@ const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif
-
-struct SwapChainSupportDetails {
-  VkSurfaceCapabilitiesKHR capabilities;
-  std::vector<VkSurfaceFormatKHR> formats;
-  std::vector<VkPresentModeKHR> presentModes;
-};
 
 struct UniformBufferObject {
   alignas(16) glm::mat4 model;
