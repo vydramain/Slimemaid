@@ -18,7 +18,6 @@ SubRendererParams::~SubRendererParams() = default;
 void SubRendererParams::set_resolution(uint32_t input_width, uint32_t input_height) {
   WIDTH = input_width;
   HEIGHT = input_height;
-
 }
 
 const uint32_t* SubRendererParams::get_width() const { return &WIDTH; }

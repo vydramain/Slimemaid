@@ -33,6 +33,7 @@
 #include <map>
 #include <set>
 
+#include "components/ComponentArray.hpp"
 #include "components/structs/UniformBufferObject.hpp"
 #include "components/structs/QueueFamilyIndices.hpp"
 #include "components/structs/SwapChainSupportDetails.hpp"
@@ -53,9 +54,11 @@ const std::vector<const char*> deviceExtensions = {
 };
 
 #ifdef NDEBUG
-const bool enableValidationLayers = false;
+  const bool enableValidationLayers = false;
+  #define assert(condition) ((void)0)
 #else
-const bool enableValidationLayers = true;
+  const bool enableValidationLayers = true;
+  #define assert(condition) /*implementation defined*/
 #endif
 
 
