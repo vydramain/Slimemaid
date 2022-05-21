@@ -11,8 +11,8 @@
 #define SLIMEMAID_ENTITYMANAGER_HPP
 
 #include <array>
-#include <cassert>
 #include <queue>
+#include <cassert>
 
 #include "Signature.hpp"
 #include "entities/Entity.hpp"

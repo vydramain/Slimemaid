@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <optional>
 #include <iostream>
+#include <cassert>
 #include <fstream>
 #include <cstdint> // Necessary for uint32_t
 #include <cstdlib>

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 project(Slimemaid)
 
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake")
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 find_package(STBImage REQUIRED)
 include_directories(SYSTEM ${STBI_INCLUDE_DIR})
