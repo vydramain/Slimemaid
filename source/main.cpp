@@ -34,13 +34,13 @@
 #include <set>
 
 #include "components/ComponentArray.hpp"
-#include "components/structs/UniformBufferObject.hpp"
-#include "components/structs/QueueFamilyIndices.hpp"
-#include "components/structs/SwapChainSupportDetails.hpp"
-#include "components/structs/Vertex.hpp"
-#include "components/subs/SubRendererParams.hpp"
+#include "components/renderer/UniformBufferObject.hpp"
+#include "components/renderer/QueueFamilyIndices.hpp"
+#include "components/renderer/SwapChainSupportDetails.hpp"
+#include "components/renderer/Vertex.hpp"
+#include "components/renderer/Frame.hpp"
 
-const SubRendererParams rendererParams;
+const Frame frameParams;
 
 const std::string MODEL_PATH = "raws/viking_room/viking_room.obj";
 const std::string TEXTURE_PATH = "raws/viking_room/viking_room.png";
@@ -159,7 +159,7 @@ class SmVulkanRenderer {
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    window = glfwCreateWindow(*rendererParams.get_width(), *rendererParams.get_height(), "Vulkan", nullptr, nullptr);
+    window = glfwCreateWindow(frameParams.WIDTH, frameParams.HEIGHT, "Vulkan", nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
     std::cout << "GLFW initialization process ends with success..." << std::endl;
@@ -246,7 +246,7 @@ class SmVulkanRenderer {
     vkDestroyImage(device, textureImage, nullptr);
     vkFreeMemory(device, textureImageMemory, nullptr);
 
-    for (size_t i = 0; i < rendererParams.get_max_frames_in_flight(); i++) {
+    for (size_t i = 0; i < frameParams.MAX_FRAMES_IN_FLIGHT; i++) {
       vkDestroyBuffer(device, uniformBuffers[i], nullptr);
       vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
     }
@@ -258,7 +258,7 @@ class SmVulkanRenderer {
     vkDestroyBuffer(device, vertexBuffer, nullptr);
     vkFreeMemory(device, vertexBufferMemory, nullptr);
 
-    for (size_t i = 0; i < rendererParams.get_max_frames_in_flight(); i++) {
+    for (size_t i = 0; i < frameParams.MAX_FRAMES_IN_FLIGHT; i++) {
       vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
       vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
       vkDestroyFence(device, inFlightFences[i], nullptr);
@@ -1402,10 +1402,10 @@ class SmVulkanRenderer {
   void createUniformBuffers() {
     VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-    uniformBuffers.resize(rendererParams.get_max_frames_in_flight());
-    uniformBuffersMemory.resize(rendererParams.get_max_frames_in_flight());
+    uniformBuffers.resize(frameParams.MAX_FRAMES_IN_FLIGHT);
+    uniformBuffersMemory.resize(frameParams.MAX_FRAMES_IN_FLIGHT);
 
-    for (size_t i = 0; i < rendererParams.get_max_frames_in_flight(); i++) {
+    for (size_t i = 0; i < frameParams.MAX_FRAMES_IN_FLIGHT; i++) {
       createBuffer(bufferSize,
                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -1475,15 +1475,15 @@ class SmVulkanRenderer {
   void createDescriptorPool() {
     std::array<VkDescriptorPoolSize, 2> descriptorPoolSizes{};
     descriptorPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptorPoolSizes[0].descriptorCount = static_cast<uint32_t>(rendererParams.get_max_frames_in_flight());
+    descriptorPoolSizes[0].descriptorCount = static_cast<uint32_t>(frameParams.MAX_FRAMES_IN_FLIGHT);
     descriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptorPoolSizes[1].descriptorCount = static_cast<uint32_t>(rendererParams.get_max_frames_in_flight());
+    descriptorPoolSizes[1].descriptorCount = static_cast<uint32_t>(frameParams.MAX_FRAMES_IN_FLIGHT);
 
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
     descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     descriptorPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(descriptorPoolSizes.size());
     descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSizes.data();
-    descriptorPoolCreateInfo.maxSets = static_cast<uint32_t>(rendererParams.get_max_frames_in_flight());
+    descriptorPoolCreateInfo.maxSets = static_cast<uint32_t>(frameParams.MAX_FRAMES_IN_FLIGHT);
 
     if (VK_SUCCESS != vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, nullptr, &descriptorPool)) {
       throw std::runtime_error("Failed to create descriptor pool for uniform buffers");
@@ -1493,19 +1493,19 @@ class SmVulkanRenderer {
   }
 
   void createDescriptorSets() {
-    std::vector<VkDescriptorSetLayout> layouts(rendererParams.get_max_frames_in_flight(), descriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> layouts(frameParams.MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = descriptorPool;
-    allocInfo.descriptorSetCount = static_cast<uint32_t>(rendererParams.get_max_frames_in_flight());
+    allocInfo.descriptorSetCount = static_cast<uint32_t>(frameParams.MAX_FRAMES_IN_FLIGHT);
     allocInfo.pSetLayouts = layouts.data();
 
-    descriptorSets.resize(rendererParams.get_max_frames_in_flight());
+    descriptorSets.resize(frameParams.MAX_FRAMES_IN_FLIGHT);
     if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
       throw std::runtime_error("Failed to allocate descriptor sets for uniform buffers");
     }
 
-    for (size_t i = 0; i < rendererParams.get_max_frames_in_flight(); i++) {
+    for (size_t i = 0; i < frameParams.MAX_FRAMES_IN_FLIGHT; i++) {
       VkDescriptorBufferInfo bufferInfo{};
       bufferInfo.buffer = uniformBuffers[i];
       bufferInfo.offset = 0;
@@ -1544,7 +1544,7 @@ class SmVulkanRenderer {
   }
 
   void createCommandBuffers() {
-    commandBuffers.resize(rendererParams.get_max_frames_in_flight());
+    commandBuffers.resize(frameParams.MAX_FRAMES_IN_FLIGHT);
 
     VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
     commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -1560,9 +1560,9 @@ class SmVulkanRenderer {
   }
 
   void createSyncObjects() {
-    imageAvailableSemaphores.resize(rendererParams.get_max_frames_in_flight());
-    renderFinishedSemaphores.resize(rendererParams.get_max_frames_in_flight());
-    inFlightFences.resize(rendererParams.get_max_frames_in_flight());
+    imageAvailableSemaphores.resize(frameParams.MAX_FRAMES_IN_FLIGHT);
+    renderFinishedSemaphores.resize(frameParams.MAX_FRAMES_IN_FLIGHT);
+    inFlightFences.resize(frameParams.MAX_FRAMES_IN_FLIGHT);
 
     VkSemaphoreCreateInfo semaphoreCreateInfo{};
     semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -1571,7 +1571,7 @@ class SmVulkanRenderer {
     fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    for (size_t i = 0; i < rendererParams.get_max_frames_in_flight(); i++) {
+    for (size_t i = 0; i < frameParams.MAX_FRAMES_IN_FLIGHT; i++) {
       if (VK_SUCCESS != vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &imageAvailableSemaphores[i]) ||
           VK_SUCCESS != vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &renderFinishedSemaphores[i]) ||
           VK_SUCCESS != vkCreateFence(device, &fenceCreateInfo, nullptr, &inFlightFences[i])) {
@@ -1938,7 +1938,7 @@ class SmVulkanRenderer {
       throw std::runtime_error("Failed to preset swap chain image");
     }
 
-    currentFrame = (currentFrame + 1) % rendererParams.get_max_frames_in_flight();
+    currentFrame = (currentFrame + 1) % frameParams.MAX_FRAMES_IN_FLIGHT;
   }
 
   void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {

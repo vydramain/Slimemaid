@@ -10,11 +10,10 @@
 
 #include <cstdint> // Necessary for uint32_t
 
-class AbsRendererParams {
-  protected:
-   uint32_t WIDTH;
-   uint32_t HEIGHT;
-   uint32_t MAX_FRAMES_IN_FLIGHT;
+struct Frame {
+   uint32_t WIDTH = 800;
+   uint32_t HEIGHT = 600;
+   uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 };
 
 #endif  // SLIMEMAID_ABSRENDERERPARAMS_HPP
