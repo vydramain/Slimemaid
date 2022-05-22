@@ -31,6 +31,7 @@
 
 #include "components/ComponentArray.hpp"
 #include "components/renderer/Frame.hpp"
+#include "components/renderer/Window.hpp"
 #include "components/renderer/QueueFamilyIndices.hpp"
 #include "components/renderer/SwapChainSupportDetails.hpp"
 #include "components/renderer/UniformBufferObject.hpp"
@@ -77,7 +78,7 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance,
 
 class SmVulkanRendererSystem {
  private:
-  GLFWwindow* window;
+  Window window;
 
   VkInstance instance;
   VkDebugUtilsMessengerEXT debugMessenger;
@@ -147,9 +148,9 @@ class SmVulkanRendererSystem {
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    window = glfwCreateWindow(frameParams.WIDTH, frameParams.HEIGHT, "Vulkan", nullptr, nullptr);
-    glfwSetWindowUserPointer(window, this);
-    glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+    window.glfw_window = glfwCreateWindow(frameParams.WIDTH, frameParams.HEIGHT, "Vulkan", nullptr, nullptr);
+    glfwSetWindowUserPointer(window.glfw_window, this);
+    glfwSetFramebufferSizeCallback(window.glfw_window, framebufferResizeCallback);
     std::cout << "GLFW initialization process ends with success..." << std::endl;
   }
 
@@ -190,7 +191,7 @@ class SmVulkanRendererSystem {
 
   void mainLoop() {
     std::cout << "Start main loop function..." << std::endl;
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(window.glfw_window)) {
       glfwPollEvents();
       drawFrame();
     }
@@ -261,7 +262,7 @@ class SmVulkanRendererSystem {
 
     vkDestroySurfaceKHR(instance, surface, nullptr);
     vkDestroyInstance(instance, nullptr);
-    glfwDestroyWindow(window);
+    glfwDestroyWindow(window.glfw_window);
     glfwTerminate();
 
     std::cout << "Clean up process ends with success..." << std::endl;
@@ -269,9 +270,9 @@ class SmVulkanRendererSystem {
 
   void recreateSwapChain() {
     int width = 0, height = 0;
-    glfwGetFramebufferSize(window, &width, &height);
+    glfwGetFramebufferSize(window.glfw_window, &width, &height);
     while (width == 0 || height == 0) {
-      glfwGetFramebufferSize(window, &width, &height);
+      glfwGetFramebufferSize(window.glfw_window, &width, &height);
       glfwWaitEvents();
     }
 
@@ -357,7 +358,7 @@ class SmVulkanRendererSystem {
   }
 
   void createSurface() {
-    if (VK_SUCCESS != glfwCreateWindowSurface(instance, window, nullptr, &surface)) {
+    if (VK_SUCCESS != glfwCreateWindowSurface(instance, window.glfw_window, nullptr, &surface)) {
       throw std::runtime_error("Failed to create window surface");
     }
 
@@ -1376,7 +1377,7 @@ class SmVulkanRendererSystem {
     } else {
       int height;
       int width;
-      glfwGetFramebufferSize(window, &height, &width);
+      glfwGetFramebufferSize(window.glfw_window, &height, &width);
 
       VkExtent2D actualExtent = {static_cast<uint32_t>(height), static_cast<uint32_t>(width)};
 

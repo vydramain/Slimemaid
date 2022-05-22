@@ -13,7 +13,7 @@
 #include <GLFW/glfw3.h>
 
 struct Window {
-  GLFWwindow* window;
+  GLFWwindow* glfw_window;
 };
 
 #endif  // SLIMEMAID_WINDOW_HPP
