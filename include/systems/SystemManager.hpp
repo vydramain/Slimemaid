@@ -18,7 +18,7 @@
 #include "entities/Signature.hpp"
 #include "systems/System.hpp"
 
-class SystemManager {
+class SystemManagerSystem {
  public:
   template<typename T>
   std::shared_ptr<T> register_system();

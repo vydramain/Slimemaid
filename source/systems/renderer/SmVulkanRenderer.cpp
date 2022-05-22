@@ -5,5 +5,5 @@
 ------------------------------------
 */
 
-#include "systems/renderer/SmVulkanRenderer.hpp"
+#include "systems/renderer/SmVulkanRendererSystem.hpp"
 

@@ -9,7 +9,7 @@
 #include "systems/SystemManager.hpp"
 
 template<typename T>
-std::shared_ptr<T> SystemManager::register_system() {
+std::shared_ptr<T> SystemManagerSystem::register_system() {
   const char* type_name = typeid(T).name();
 
   assert(m_systems.find(type_name) == m_systems.end() && "Registering system more than once.");
@@ -21,7 +21,7 @@ std::shared_ptr<T> SystemManager::register_system() {
 }
 
 template<typename T>
-void SystemManager::set_signature(Signature signature) {
+void SystemManagerSystem::set_signature(Signature signature) {
   const char* type_name = typeid(T).name();
 
   assert(m_systems.find(type_name) != m_systems.end() && "System used before registered.");
@@ -30,7 +30,7 @@ void SystemManager::set_signature(Signature signature) {
   m_signatures.insert({type_name, signature});
 }
 
-void SystemManager::entity_destroyed(Entity entity) {
+void SystemManagerSystem::entity_destroyed(Entity entity) {
   // Erase a destroyed entity from all system lists
   // m_entities is a set so no check needed
   for (auto const& pair : m_systems) {
@@ -40,7 +40,7 @@ void SystemManager::entity_destroyed(Entity entity) {
   }
 }
 
-void SystemManager::entity_signature_changed(Entity entity, Signature entity_signature) {
+void SystemManagerSystem::entity_signature_changed(Entity entity, Signature entity_signature) {
   // Notify each system that an entity's signature changed
   for (auto const& pair : m_systems) {
     auto const& type = pair.first;
