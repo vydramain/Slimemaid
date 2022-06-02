@@ -30,9 +30,10 @@
 #include <vector>
 
 #include "components/renderer/Frame.hpp"
-#include "components/renderer/QueueFamilyIndices.hpp"
 #include "components/renderer/SmDevices.hpp"
 #include "components/renderer/SmQueues.hpp"
+#include "components/renderer/SmSwapChain.hpp"
+#include "components/renderer/QueueFamilyIndices.hpp"
 #include "components/renderer/SwapChainSupportDetails.hpp"
 #include "components/renderer/UniformBufferObject.hpp"
 #include "components/renderer/Vertex.hpp"
@@ -84,15 +85,8 @@ class SmVulkanRendererSystem {
   VkSurfaceKHR surface;
 
   SmDevices devices;
-
   SmQueues queues;
-
-  VkSwapchainKHR swapChain;
-  std::vector<VkImage> swapChainImages;
-  VkFormat swapChainImageFormat;
-  VkExtent2D swapChainExtent;
-  std::vector<VkImageView> swapChainImageViews;
-  std::vector<VkFramebuffer> swapChainFramebuffers;
+  SmSwapChain swap_chain;
 
   VkRenderPass renderPass;
   VkDescriptorSetLayout descriptorSetLayout;
@@ -207,7 +201,7 @@ class SmVulkanRendererSystem {
     vkDestroyImage(devices.device, depthImage, nullptr);          // dif
     vkFreeMemory(devices.device, depthImageMemory, nullptr);      // dif
 
-    for (auto framebuffer : swapChainFramebuffers) {
+    for (auto framebuffer : swap_chain.swapChainFramebuffers) {
       vkDestroyFramebuffer(devices.device, framebuffer, nullptr);
     }
 
@@ -215,11 +209,11 @@ class SmVulkanRendererSystem {
     vkDestroyPipelineLayout(devices.device, pipelineLayout, nullptr);
     vkDestroyRenderPass(devices.device, renderPass, nullptr);
 
-    for (auto imageView : swapChainImageViews) {
+    for (auto imageView : swap_chain.swapChainImageViews) {
       vkDestroyImageView(devices.device, imageView, nullptr);
     }
 
-    vkDestroySwapchainKHR(devices.device, swapChain, nullptr);
+    vkDestroySwapchainKHR(devices.device, swap_chain.swapChain, nullptr);
 
     std::cout << "Swap chain clean up process ends with success..." << std::endl;
   }
@@ -506,25 +500,25 @@ class SmVulkanRendererSystem {
     createInfo.presentMode = presentMode;
     createInfo.clipped = VK_TRUE;
 
-    if (VK_SUCCESS != vkCreateSwapchainKHR(devices.device, &createInfo, nullptr, &swapChain)) {
+    if (VK_SUCCESS != vkCreateSwapchainKHR(devices.device, &createInfo, nullptr, &swap_chain.swapChain)) {
       throw std::runtime_error("Failed to create swap chain");
     }
 
-    vkGetSwapchainImagesKHR(devices.device, swapChain, &imageCount, nullptr);
-    swapChainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(devices.device, swapChain, &imageCount, swapChainImages.data());
+    vkGetSwapchainImagesKHR(devices.device, swap_chain.swapChain, &imageCount, nullptr);
+    swap_chain.swapChainImages.resize(imageCount);
+    vkGetSwapchainImagesKHR(devices.device, swap_chain.swapChain, &imageCount, swap_chain.swapChainImages.data());
 
-    swapChainImageFormat = surfaceFormat.format;
-    swapChainExtent = tmpSwapChainExtent;
+    swap_chain.swapChainImageFormat = surfaceFormat.format;
+    swap_chain.swapChainExtent = tmpSwapChainExtent;
 
     std::cout << "Swap chain creation process ends with success..." << std::endl;
   }
 
   void createImageViews() {
-    swapChainImageViews.resize(swapChainImages.size());
+    swap_chain.swapChainImageViews.resize(swap_chain.swapChainImages.size());
 
-    for (uint32_t i = 0; i < swapChainImages.size(); i++) {
-      swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+    for (uint32_t i = 0; i < swap_chain.swapChainImages.size(); i++) {
+      swap_chain.swapChainImageViews[i] = createImageView(swap_chain.swapChainImages[i], swap_chain.swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
     }
 
     std::cout << "Image view creation process ends with success..." << std::endl;
@@ -532,7 +526,7 @@ class SmVulkanRendererSystem {
 
   void createRenderPass() {
     VkAttachmentDescription colorAttachmentDescription{};
-    colorAttachmentDescription.format = swapChainImageFormat;
+    colorAttachmentDescription.format = swap_chain.swapChainImageFormat;
     colorAttachmentDescription.samples = msaaSamples;
     colorAttachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorAttachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -552,7 +546,7 @@ class SmVulkanRendererSystem {
     depthAttachmentDescription.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkAttachmentDescription colorAttachmentResolveDescription{};
-    colorAttachmentResolveDescription.format = swapChainImageFormat;
+    colorAttachmentResolveDescription.format = swap_chain.swapChainImageFormat;
     colorAttachmentResolveDescription.samples = VK_SAMPLE_COUNT_1_BIT;
     colorAttachmentResolveDescription.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     colorAttachmentResolveDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -679,14 +673,14 @@ class SmVulkanRendererSystem {
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.height = (float) swapChainExtent.height;
-    viewport.width = (float) swapChainExtent.width;
+    viewport.height = (float) swap_chain.swapChainExtent.height;
+    viewport.width = (float) swap_chain.swapChainExtent.width;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     VkRect2D scissor{};
     scissor.offset = {0, 0};
-    scissor.extent = swapChainExtent;
+    scissor.extent = swap_chain.swapChainExtent;
 
     VkPipelineViewportStateCreateInfo viewportStateCreateInfo{};
     viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -798,12 +792,12 @@ class SmVulkanRendererSystem {
   }
 
   void createFramebuffers() {
-    swapChainFramebuffers.resize(swapChainImageViews.size());
-    for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+    swap_chain.swapChainFramebuffers.resize(swap_chain.swapChainImageViews.size());
+    for (size_t i = 0; i < swap_chain.swapChainImageViews.size(); i++) {
       std::array<VkImageView, 3> attachments = {
           colorImageView,
           depthImageView,
-          swapChainImageViews[i],
+          swap_chain.swapChainImageViews[i],
       };
 
       VkFramebufferCreateInfo framebufferCreateInfo{};
@@ -811,11 +805,11 @@ class SmVulkanRendererSystem {
       framebufferCreateInfo.renderPass = renderPass;
       framebufferCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
       framebufferCreateInfo.pAttachments = attachments.data();
-      framebufferCreateInfo.width = swapChainExtent.width;
-      framebufferCreateInfo.height = swapChainExtent.height;
+      framebufferCreateInfo.width = swap_chain.swapChainExtent.width;
+      framebufferCreateInfo.height = swap_chain.swapChainExtent.height;
       framebufferCreateInfo.layers = 1;
 
-      if (VK_SUCCESS != vkCreateFramebuffer(devices.device, &framebufferCreateInfo, nullptr, &swapChainFramebuffers[i])) {
+      if (VK_SUCCESS != vkCreateFramebuffer(devices.device, &framebufferCreateInfo, nullptr, &swap_chain.swapChainFramebuffers[i])) {
         throw std::runtime_error("Failed to create framebuffer");
       }
     }
@@ -841,8 +835,8 @@ class SmVulkanRendererSystem {
   void createDepthResources() {
     VkFormat depthFormat = findDepthFormat();
 
-    createImage(swapChainExtent.width,
-                swapChainExtent.height,
+    createImage(swap_chain.swapChainExtent.width,
+                swap_chain.swapChainExtent.height,
                 1,
                 msaaSamples,
                 depthFormat,
@@ -887,10 +881,10 @@ class SmVulkanRendererSystem {
   }
 
   void createColorResources() {
-    VkFormat colorFormat = swapChainImageFormat;
+    VkFormat colorFormat = swap_chain.swapChainImageFormat;
 
-    createImage(swapChainExtent.width,
-                swapChainExtent.height,
+    createImage(swap_chain.swapChainExtent.width,
+                swap_chain.swapChainExtent.height,
                 1,
                 msaaSamples,
                 colorFormat,
@@ -1421,7 +1415,7 @@ class SmVulkanRendererSystem {
 
     uint32_t imageIndex;
     VkResult acquireImageResult = vkAcquireNextImageKHR(
-        devices.device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+        devices.device, swap_chain.swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
     if (VK_ERROR_OUT_OF_DATE_KHR == acquireImageResult) {
       recreateSwapChain();
       return;
@@ -1460,7 +1454,7 @@ class SmVulkanRendererSystem {
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
 
-    VkSwapchainKHR swapChains[] = {swapChain};
+    VkSwapchainKHR swapChains[] = {swap_chain.swapChain};
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = swapChains;
 
@@ -1491,9 +1485,9 @@ class SmVulkanRendererSystem {
     VkRenderPassBeginInfo renderPassBeginInfo{};
     renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassBeginInfo.renderPass = renderPass;
-    renderPassBeginInfo.framebuffer = swapChainFramebuffers[imageIndex];
+    renderPassBeginInfo.framebuffer = swap_chain.swapChainFramebuffers[imageIndex];
     renderPassBeginInfo.renderArea.offset = {0, 0};
-    renderPassBeginInfo.renderArea.extent = swapChainExtent;
+    renderPassBeginInfo.renderArea.extent = swap_chain.swapChainExtent;
 
     std::array<VkClearValue, 2> clearValues{};
     clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
@@ -1536,7 +1530,7 @@ class SmVulkanRendererSystem {
     ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(20.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.proj =
-        glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
+        glm::perspective(glm::radians(45.0f), swap_chain.swapChainExtent.width / (float) swap_chain.swapChainExtent.height, 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
 
     // Bug reason is:
