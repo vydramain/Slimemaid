@@ -30,10 +30,11 @@
 #include <vector>
 
 #include "components/renderer/Frame.hpp"
+#include "components/renderer/QueueFamilyIndices.hpp"
+#include "components/renderer/SmDepthBuffers.hpp"
 #include "components/renderer/SmDevices.hpp"
 #include "components/renderer/SmQueues.hpp"
 #include "components/renderer/SmSwapChain.hpp"
-#include "components/renderer/QueueFamilyIndices.hpp"
 #include "components/renderer/SwapChainSupportDetails.hpp"
 #include "components/renderer/UniformBufferObject.hpp"
 #include "components/renderer/Vertex.hpp"
@@ -87,6 +88,7 @@ class SmVulkanRendererSystem {
   SmDevices devices;
   SmQueues queues;
   SmSwapChain swap_chain;
+  SmDepthBuffers depth_buffers;
 
   VkRenderPass renderPass;
   VkDescriptorSetLayout descriptorSetLayout;
@@ -94,10 +96,6 @@ class SmVulkanRendererSystem {
   VkPipeline graphicsPipeline;
 
   VkCommandPool commandPool;
-
-  VkImage depthImage;
-  VkDeviceMemory depthImageMemory;
-  VkImageView depthImageView;
 
   uint32_t mipLevels;
   VkImage textureImage;
@@ -197,9 +195,9 @@ class SmVulkanRendererSystem {
     vkDestroyImage(devices.device, colorImage, nullptr);
     vkFreeMemory(devices.device, colorImageMemory, nullptr);
 
-    vkDestroyImageView(devices.device, depthImageView, nullptr);  // dif
-    vkDestroyImage(devices.device, depthImage, nullptr);          // dif
-    vkFreeMemory(devices.device, depthImageMemory, nullptr);      // dif
+    vkDestroyImageView(devices.device, depth_buffers.depthImageView, nullptr);  // dif
+    vkDestroyImage(devices.device, depth_buffers.depthImage, nullptr);          // dif
+    vkFreeMemory(devices.device, depth_buffers.depthImageMemory, nullptr);      // dif
 
     for (auto framebuffer : swap_chain.swapChainFramebuffers) {
       vkDestroyFramebuffer(devices.device, framebuffer, nullptr);
@@ -796,7 +794,7 @@ class SmVulkanRendererSystem {
     for (size_t i = 0; i < swap_chain.swapChainImageViews.size(); i++) {
       std::array<VkImageView, 3> attachments = {
           colorImageView,
-          depthImageView,
+          depth_buffers.depthImageView,
           swap_chain.swapChainImageViews[i],
       };
 
@@ -843,13 +841,13 @@ class SmVulkanRendererSystem {
                 VK_IMAGE_TILING_OPTIMAL,
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                depthImage,
-                depthImageMemory, devices.physical_device, devices.device);
-    depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+                depth_buffers.depthImage,
+                depth_buffers.depthImageMemory, devices.physical_device, devices.device);
+    depth_buffers.depthImageView = createImageView(depth_buffers.depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
     transitionImageLayout(devices.device,
                           commandPool,
                           queues.graphics_queue,
-                          depthImage,
+                          depth_buffers.depthImage,
                           depthFormat,
                           VK_IMAGE_LAYOUT_UNDEFINED,
                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
