@@ -35,7 +35,8 @@
 #include "components/renderer/SmDevices.hpp"
 #include "components/renderer/SmQueues.hpp"
 #include "components/renderer/SmSwapChain.hpp"
-#include "components/renderer/SmTextureBuffers.hpp"
+#include "components/renderer/SmTextureImage.hpp"
+#include "components/renderer/SmTextureImageViewSampler.hpp"
 #include "components/renderer/SwapChainSupportDetails.hpp"
 #include "components/renderer/UniformBufferObject.hpp"
 #include "components/renderer/Vertex.hpp"
@@ -44,6 +45,7 @@
 #include "systems/renderer/SmCommandsSystem.hpp"
 #include "systems/renderer/SmModelLoaderSystem.hpp"
 #include "systems/renderer/SmTextureImageSystem.hpp"
+#include "systems/renderer/SmTextureImageViewSamplerSystem.hpp"
 
 const Frame frameParams;
 
@@ -90,7 +92,8 @@ class SmVulkanRendererSystem {
   SmQueues queues;
   SmSwapChain swap_chain;
   SmDepthBuffers depth_buffers;
-  SmTextureBuffers texture_buffers;
+  SmTextureImage texture_model_resources;
+  SmTextureImageViewSampler texture_model_resources_read_handler;
 
   VkRenderPass renderPass;
   VkDescriptorSetLayout descriptorSetLayout;
@@ -100,8 +103,6 @@ class SmVulkanRendererSystem {
   VkCommandPool commandPool;
 
   uint32_t mipLevels;
-  VkImageView textureImageView;
-  VkSampler textureSampler;
 
   std::vector<Vertex> vertices;  // {{rel_x, rel_y, rel_z}, {R, G, B}, {tex_rel_x, tex_rel_x}}
   std::vector<uint32_t> indices;
@@ -163,8 +164,9 @@ class SmVulkanRendererSystem {
     createDepthResources();
     createColorResources();
     createFramebuffers();
-    createTextureImage(devices.device, devices.physical_device, commandPool, queues.graphics_queue, mipLevels, texture_buffers.texture_image, texture_buffers.texture_image_memory);
-    createTextureImageView();
+    createTextureImage(devices.device, devices.physical_device, commandPool, queues.graphics_queue, mipLevels,
+                       texture_model_resources.texture_image, texture_model_resources.texture_image_memory);
+    createTextureImageView(devices, texture_model_resources, texture_model_resources_read_handler, mipLevels);
     createTextureSampler();
     loadModel(vertices, indices);
     createVertexBuffer();
@@ -219,10 +221,10 @@ class SmVulkanRendererSystem {
   void cleanUp() {
     cleanUpSwapChain();
 
-    vkDestroySampler(devices.device, textureSampler, nullptr);
-    vkDestroyImageView(devices.device, textureImageView, nullptr);
-    vkDestroyImage(devices.device, texture_buffers.texture_image, nullptr);
-    vkFreeMemory(devices.device, texture_buffers.texture_image_memory, nullptr);
+    vkDestroySampler(devices.device, texture_model_resources_read_handler.texture_sampler, nullptr);
+    vkDestroyImageView(devices.device, texture_model_resources_read_handler.texture_image_view, nullptr);
+    vkDestroyImage(devices.device, texture_model_resources.texture_image, nullptr);
+    vkFreeMemory(devices.device, texture_model_resources.texture_image_memory, nullptr);
 
     for (size_t i = 0; i < frameParams.MAX_FRAMES_IN_FLIGHT; i++) {
       vkDestroyBuffer(devices.device, uniformBuffers[i], nullptr);
@@ -516,7 +518,11 @@ class SmVulkanRendererSystem {
     swap_chain.swapChainImageViews.resize(swap_chain.swapChainImages.size());
 
     for (uint32_t i = 0; i < swap_chain.swapChainImages.size(); i++) {
-      swap_chain.swapChainImageViews[i] = createImageView(swap_chain.swapChainImages[i], swap_chain.swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+      swap_chain.swapChainImageViews[i] = createImageView(devices,
+                                                          swap_chain.swapChainImages[i],
+                                                          swap_chain.swapChainImageFormat,
+                                                          VK_IMAGE_ASPECT_COLOR_BIT,
+                                                          1);
     }
 
     std::cout << "Image view creation process ends with success..." << std::endl;
@@ -843,7 +849,11 @@ class SmVulkanRendererSystem {
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 depth_buffers.depthImage,
                 depth_buffers.depthImageMemory, devices.physical_device, devices.device);
-    depth_buffers.depthImageView = createImageView(depth_buffers.depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+    depth_buffers.depthImageView = createImageView(devices,
+                                                   depth_buffers.depthImage,
+                                                   depthFormat,
+                                                   VK_IMAGE_ASPECT_DEPTH_BIT,
+                                                   1);
     transitionImageLayout(devices.device,
                           commandPool,
                           queues.graphics_queue,
@@ -892,34 +902,11 @@ class SmVulkanRendererSystem {
                 colorImage,
                 colorImageMemory, devices.physical_device,
                 devices.device);
-    colorImageView = createImageView(colorImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
-  }
-
-  void createTextureImageView() {
-    textureImageView = createImageView(texture_buffers.texture_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
-
-    std::cout << "Filling texture image view process ends with success..." << std::endl;
-  }
-
-  VkImageView createImageView(VkImage inputImage, VkFormat inputFormat, VkImageAspectFlags inputAspectMask,
-                              uint32_t inputMipLevels) {
-    VkImageViewCreateInfo viewInfo{};
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.image = inputImage;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.format = inputFormat;
-    viewInfo.subresourceRange.aspectMask = inputAspectMask;
-    viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = inputMipLevels;
-    viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = 1;
-
-    VkImageView imageView;
-    if (vkCreateImageView(devices.device, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
-      throw std::runtime_error("Failed to create texture image view");
-    }
-
-    return imageView;
+    colorImageView = createImageView(devices,
+                                     colorImage,
+                                     colorFormat,
+                                     VK_IMAGE_ASPECT_COLOR_BIT,
+                                     1);
   }
 
   void createTextureSampler() {
@@ -944,7 +931,7 @@ class SmVulkanRendererSystem {
     samplerCreateInfo.minLod = 0.0f;
     samplerCreateInfo.maxLod = static_cast<float>(mipLevels);
 
-    if (VK_SUCCESS != vkCreateSampler(devices.device, &samplerCreateInfo, nullptr, &textureSampler)) {
+    if (VK_SUCCESS != vkCreateSampler(devices.device, &samplerCreateInfo, nullptr, &texture_model_resources_read_handler.texture_sampler)) {
       throw std::runtime_error("Failed to create texture sampler");
     }
 
@@ -1086,8 +1073,8 @@ class SmVulkanRendererSystem {
 
       VkDescriptorImageInfo imageInfo{};
       imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-      imageInfo.imageView = textureImageView;
-      imageInfo.sampler = textureSampler;
+      imageInfo.imageView = texture_model_resources_read_handler.texture_image_view;
+      imageInfo.sampler = texture_model_resources_read_handler.texture_sampler;
 
       std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
       descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
