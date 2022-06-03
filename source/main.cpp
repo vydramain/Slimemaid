@@ -102,8 +102,6 @@ class SmVulkanRendererSystem {
 
   VkCommandPool commandPool;
 
-  uint32_t mipLevels;
-
   std::vector<VkBuffer> uniformBuffers;
   std::vector<VkDeviceMemory> uniformBuffersMemory;
 
@@ -156,9 +154,9 @@ class SmVulkanRendererSystem {
     createDepthResources();
     createColorResources();
     createFramebuffers();
-    createTextureImage(devices.device, devices.physical_device, commandPool, queues.graphics_queue, mipLevels,
+    createTextureImage(devices.device, devices.physical_device, commandPool, queues.graphics_queue, texture_model_resources.mipLevels,
                        texture_model_resources.texture_image, texture_model_resources.texture_image_memory);
-    createTextureImageView(devices, texture_model_resources, texture_model_resources_read_handler, mipLevels);
+    createTextureImageView(devices, texture_model_resources, texture_model_resources_read_handler, texture_model_resources.mipLevels);
     createTextureSampler();
     loadModel(scene_model_resources.vertices, scene_model_resources.indices);
     createVertexBuffer();
@@ -893,7 +891,7 @@ class SmVulkanRendererSystem {
     samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     samplerCreateInfo.mipLodBias = 0.0f;
     samplerCreateInfo.minLod = 0.0f;
-    samplerCreateInfo.maxLod = static_cast<float>(mipLevels);
+    samplerCreateInfo.maxLod = static_cast<float>(texture_model_resources.mipLevels);
 
     if (VK_SUCCESS != vkCreateSampler(devices.device, &samplerCreateInfo, nullptr,
                                       &texture_model_resources_read_handler.texture_sampler)) {
