@@ -35,6 +35,7 @@
 #include "components/renderer/SmDevices.hpp"
 #include "components/renderer/SmQueues.hpp"
 #include "components/renderer/SmSwapChain.hpp"
+#include "components/renderer/SmTextureBuffers.hpp"
 #include "components/renderer/SwapChainSupportDetails.hpp"
 #include "components/renderer/UniformBufferObject.hpp"
 #include "components/renderer/Vertex.hpp"
@@ -89,6 +90,7 @@ class SmVulkanRendererSystem {
   SmQueues queues;
   SmSwapChain swap_chain;
   SmDepthBuffers depth_buffers;
+  SmTextureBuffers texture_buffers;
 
   VkRenderPass renderPass;
   VkDescriptorSetLayout descriptorSetLayout;
@@ -98,8 +100,6 @@ class SmVulkanRendererSystem {
   VkCommandPool commandPool;
 
   uint32_t mipLevels;
-  VkImage textureImage;
-  VkDeviceMemory textureImageMemory;
   VkImageView textureImageView;
   VkSampler textureSampler;
 
@@ -163,7 +163,7 @@ class SmVulkanRendererSystem {
     createDepthResources();
     createColorResources();
     createFramebuffers();
-    createTextureImage(devices.device, devices.physical_device, commandPool, queues.graphics_queue, mipLevels, textureImage, textureImageMemory);
+    createTextureImage(devices.device, devices.physical_device, commandPool, queues.graphics_queue, mipLevels, texture_buffers.texture_image, texture_buffers.texture_image_memory);
     createTextureImageView();
     createTextureSampler();
     loadModel(vertices, indices);
@@ -221,8 +221,8 @@ class SmVulkanRendererSystem {
 
     vkDestroySampler(devices.device, textureSampler, nullptr);
     vkDestroyImageView(devices.device, textureImageView, nullptr);
-    vkDestroyImage(devices.device, textureImage, nullptr);
-    vkFreeMemory(devices.device, textureImageMemory, nullptr);
+    vkDestroyImage(devices.device, texture_buffers.texture_image, nullptr);
+    vkFreeMemory(devices.device, texture_buffers.texture_image_memory, nullptr);
 
     for (size_t i = 0; i < frameParams.MAX_FRAMES_IN_FLIGHT; i++) {
       vkDestroyBuffer(devices.device, uniformBuffers[i], nullptr);
@@ -896,7 +896,7 @@ class SmVulkanRendererSystem {
   }
 
   void createTextureImageView() {
-    textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+    textureImageView = createImageView(texture_buffers.texture_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
 
     std::cout << "Filling texture image view process ends with success..." << std::endl;
   }
