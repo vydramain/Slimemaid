@@ -28,3 +28,10 @@ You can either implement such an allocator yourself, or use the [`VulkanMemoryAl
 Inadequate descriptor pools are a good example of a problem that the validation layers will not catch: As of Vulkan 1.1, [`vkAllocateDescriptorSets`](https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkAllocateDescriptorSets.html) may fail with the error code `VK_ERROR_POOL_OUT_OF_MEMORY` if the pool is not sufficiently large, but the driver may also try to solve the problem internally. This means that sometimes (depending on hardware, pool size and allocation size) the driver will let us get away with an allocation that exceeds the limits of our descriptor pool. Other times, [`vkAllocateDescriptorSets`](https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkAllocateDescriptorSets.html) will fail and return `VK_ERROR_POOL_OUT_OF_MEMORY`. This can be particularly frustrating if the allocation succeeds on some machines, but fails on others.
 
 Since Vulkan shifts the responsiblity for the allocation to the driver, it is no longer a strict requirement to only allocate as many descriptors of a certain type (`VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER`, etc.) as specified by the corresponding `descriptorCount` members for the creation of the descriptor pool. However, it remains best practise to do so, and in the future, `VK_LAYER_KHRONOS_validation` will warn about this type of problem if you enable [Best Practice Validation](https://vulkan.lunarg.com/doc/sdk/1.3.204.1/linux/best_practices.html).
+
+
+### Free meshed
+In this project used free meshes:
+ - [Green slime](https://sketchfab.com/3d-models/slime-1-8b44e345b4a94818837e953a06e571bf) using as 3D mesh of slime for shaders demo. [Model's directory](./raws/slime_green/).
+ - [Viking room](https://sketchfab.com/3d-models/viking-room-a49f1b8e4f5c4ecf9e1fe7d81915ad38) using as 3D mesh for Vulkan renderer pipeline demo. [Model's directory](./raws/viking_room/).
+ - 
