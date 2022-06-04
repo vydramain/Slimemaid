@@ -34,6 +34,7 @@
 #include "components/renderer/SmColorImage.hpp"
 #include "components/renderer/SmCommandPool.hpp"
 #include "components/renderer/SmDepthBuffers.hpp"
+#include "components/renderer/SmDescriptorPool.hpp"
 #include "components/renderer/SmDevices.hpp"
 #include "components/renderer/SmGLFWWindow.hpp"
 #include "components/renderer/SmModelResources.hpp"
@@ -104,12 +105,10 @@ class SmVulkanRendererSystem {
   SmGraphicsPipeline graphics_pipeline;
   SmColorImage color_image;
   SmCommandPool command_pool;
+  SmDescriptorPool descriptor_pool;
 
   std::vector<VkBuffer> uniformBuffers;
   std::vector<VkDeviceMemory> uniformBuffersMemory;
-
-  VkDescriptorPool descriptorPool;
-  std::vector<VkDescriptorSet> descriptorSets;
 
   std::vector<VkSemaphore> imageAvailableSemaphores;
   std::vector<VkSemaphore> renderFinishedSemaphores;
@@ -231,7 +230,7 @@ class SmVulkanRendererSystem {
       vkFreeMemory(devices.device, uniformBuffersMemory[i], nullptr);
     }
 
-    vkDestroyDescriptorPool(devices.device, descriptorPool, nullptr);
+    vkDestroyDescriptorPool(devices.device, descriptor_pool.descriptorPool, nullptr);
     vkDestroyDescriptorSetLayout(devices.device, graphics_pipeline.descriptor_set_layout, nullptr);
     vkDestroyBuffer(devices.device, scene_model_resources.indexBuffer, nullptr);
     vkFreeMemory(devices.device, scene_model_resources.indexBufferMemory, nullptr);
@@ -851,7 +850,7 @@ class SmVulkanRendererSystem {
     descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSizes.data();
     descriptorPoolCreateInfo.maxSets = static_cast<uint32_t>(command_pool.MAX_FRAMES_IN_FLIGHT);
 
-    if (VK_SUCCESS != vkCreateDescriptorPool(devices.device, &descriptorPoolCreateInfo, nullptr, &descriptorPool)) {
+    if (VK_SUCCESS != vkCreateDescriptorPool(devices.device, &descriptorPoolCreateInfo, nullptr, &descriptor_pool.descriptorPool)) {
       throw std::runtime_error("Failed to create descriptor pool for uniform buffers");
     }
 
@@ -862,12 +861,12 @@ class SmVulkanRendererSystem {
     std::vector<VkDescriptorSetLayout> layouts(command_pool.MAX_FRAMES_IN_FLIGHT, graphics_pipeline.descriptor_set_layout);
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = descriptorPool;
+    allocInfo.descriptorPool = descriptor_pool.descriptorPool;
     allocInfo.descriptorSetCount = static_cast<uint32_t>(command_pool.MAX_FRAMES_IN_FLIGHT);
     allocInfo.pSetLayouts = layouts.data();
 
-    descriptorSets.resize(command_pool.MAX_FRAMES_IN_FLIGHT);
-    if (vkAllocateDescriptorSets(devices.device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
+    descriptor_pool.descriptorSets.resize(command_pool.MAX_FRAMES_IN_FLIGHT);
+    if (vkAllocateDescriptorSets(devices.device, &allocInfo, descriptor_pool.descriptorSets.data()) != VK_SUCCESS) {
       throw std::runtime_error("Failed to allocate descriptor sets for uniform buffers");
     }
 
@@ -884,7 +883,7 @@ class SmVulkanRendererSystem {
 
       std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
       descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      descriptorWrites[0].dstSet = descriptorSets[i];
+      descriptorWrites[0].dstSet = descriptor_pool.descriptorSets[i];
       descriptorWrites[0].dstBinding = 0;
       descriptorWrites[0].dstArrayElement = 0;
       descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -892,7 +891,7 @@ class SmVulkanRendererSystem {
       descriptorWrites[0].pBufferInfo = &bufferInfo;
 
       descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      descriptorWrites[1].dstSet = descriptorSets[i];
+      descriptorWrites[1].dstSet = descriptor_pool.descriptorSets[i];
       descriptorWrites[1].dstBinding = 1;
       descriptorWrites[1].dstArrayElement = 0;
       descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1265,7 +1264,7 @@ class SmVulkanRendererSystem {
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
     vkCmdBindIndexBuffer(commandBuffer, scene_model_resources.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline.pipeline_layout, 0, 1, descriptorSets.data(),
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline.pipeline_layout, 0, 1, descriptor_pool.descriptorSets.data(),
                             0, nullptr);
     vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(scene_model_resources.indices.size()), 1, 0, 0, 0);
 
