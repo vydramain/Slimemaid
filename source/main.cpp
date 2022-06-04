@@ -33,15 +33,16 @@
 #include "components/renderer/QueueFamilyIndices.hpp"
 #include "components/renderer/SmDepthBuffers.hpp"
 #include "components/renderer/SmDevices.hpp"
+#include "components/renderer/SmGLFWWindow.hpp"
 #include "components/renderer/SmModelResources.hpp"
 #include "components/renderer/SmQueues.hpp"
+#include "components/renderer/SmSurface.hpp"
 #include "components/renderer/SmSwapChain.hpp"
 #include "components/renderer/SmTextureImage.hpp"
 #include "components/renderer/SmTextureImageViewSampler.hpp"
 #include "components/renderer/SwapChainSupportDetails.hpp"
 #include "components/renderer/UniformBufferObject.hpp"
 #include "components/renderer/Vertex.hpp"
-#include "components/renderer/Window.hpp"
 #include "systems/renderer/SmBuffersSystem.hpp"
 #include "systems/renderer/SmCommandsSystem.hpp"
 #include "systems/renderer/SmGraphicsPipelineSystem.hpp"
@@ -85,11 +86,11 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 
 class SmVulkanRendererSystem {
  private:
-  Window window;
+  SmGLFWWindow window;
+  SmSurface surface;
 
   VkInstance instance;
   VkDebugUtilsMessengerEXT debugMessenger;
-  VkSurfaceKHR surface;
 
   SmDevices devices;
   SmQueues queues;
@@ -254,7 +255,7 @@ class SmVulkanRendererSystem {
       DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
     }
 
-    vkDestroySurfaceKHR(instance, surface, nullptr);
+    vkDestroySurfaceKHR(instance, surface.surface_khr, nullptr);
     vkDestroyInstance(instance, nullptr);
     glfwDestroyWindow(window.glfw_window);
     glfwTerminate();
@@ -357,11 +358,11 @@ class SmVulkanRendererSystem {
   }
 
   void createSurface() {
-    if (VK_SUCCESS != glfwCreateWindowSurface(instance, window.glfw_window, nullptr, &surface)) {
-      throw std::runtime_error("Failed to create window surface");
+    if (VK_SUCCESS != glfwCreateWindowSurface(instance, window.glfw_window, nullptr, &surface.surface_khr)) {
+      throw std::runtime_error("Failed to create window surface_khr");
     }
 
-    std::cout << "GLFW window surface creation process ends with success..." << std::endl;
+    std::cout << "GLFW window surface_khr creation process ends with success..." << std::endl;
   }
 
   void pickPhysicalDevice() {
@@ -482,7 +483,7 @@ class SmVulkanRendererSystem {
 
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    createInfo.surface = surface;
+    createInfo.surface = surface.surface_khr;
     createInfo.minImageCount = imageCount;
     createInfo.imageFormat = surfaceFormat.format;
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
@@ -1038,7 +1039,7 @@ class SmVulkanRendererSystem {
         indices.graphicsFamily = i;
       }
       VkBool32 presentSupport = false;
-      vkGetPhysicalDeviceSurfaceSupportKHR(input_device, i, surface, &presentSupport);
+      vkGetPhysicalDeviceSurfaceSupportKHR(input_device, i, surface.surface_khr, &presentSupport);
       if (presentSupport) {
         indices.presentFamily = i;
       }
@@ -1067,7 +1068,7 @@ class SmVulkanRendererSystem {
         indices.graphicsFamily = i;
       }
       VkBool32 presentSupport = false;
-      vkGetPhysicalDeviceSurfaceSupportKHR(input_device, i, surface, &presentSupport);
+      vkGetPhysicalDeviceSurfaceSupportKHR(input_device, i, surface.surface_khr, &presentSupport);
       if (presentSupport) {
         indices.presentFamily = i;
       }
@@ -1080,21 +1081,21 @@ class SmVulkanRendererSystem {
 
   SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice input_device) {
     SwapChainSupportDetails details;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(input_device, surface, &details.capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(input_device, surface.surface_khr, &details.capabilities);
 
     uint32_t formatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(input_device, surface, &formatCount, nullptr);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(input_device, surface.surface_khr, &formatCount, nullptr);
     if (0 != formatCount) {
       details.formats.resize(formatCount);
-      vkGetPhysicalDeviceSurfaceFormatsKHR(input_device, surface, &formatCount, details.formats.data());
+      vkGetPhysicalDeviceSurfaceFormatsKHR(input_device, surface.surface_khr, &formatCount, details.formats.data());
     }
 
     uint32_t presentModeCount;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(input_device, surface, &presentModeCount, nullptr);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(input_device, surface.surface_khr, &presentModeCount, nullptr);
 
     if (0 != presentModeCount) {
       details.presentModes.resize(presentModeCount);
-      vkGetPhysicalDeviceSurfacePresentModesKHR(input_device, surface, &presentModeCount, details.presentModes.data());
+      vkGetPhysicalDeviceSurfacePresentModesKHR(input_device, surface.surface_khr, &presentModeCount, details.presentModes.data());
     }
 
     return details;
