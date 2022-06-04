@@ -31,6 +31,7 @@
 
 #include "components/renderer/Frame.hpp"
 #include "components/renderer/QueueFamilyIndices.hpp"
+#include "components/renderer/SmColorImage.hpp"
 #include "components/renderer/SmDepthBuffers.hpp"
 #include "components/renderer/SmDevices.hpp"
 #include "components/renderer/SmGLFWWindow.hpp"
@@ -100,8 +101,10 @@ class SmVulkanRendererSystem {
   SmTextureImageViewSampler texture_model_resources_read_handler;
   SmModelResources scene_model_resources;
   SmGraphicsPipeline graphics_pipeline;
+  SmColorImage color_image;
 
   VkCommandPool commandPool;
+  std::vector<VkCommandBuffer> commandBuffers;
 
   std::vector<VkBuffer> uniformBuffers;
   std::vector<VkDeviceMemory> uniformBuffersMemory;
@@ -109,17 +112,11 @@ class SmVulkanRendererSystem {
   VkDescriptorPool descriptorPool;
   std::vector<VkDescriptorSet> descriptorSets;
 
-  std::vector<VkCommandBuffer> commandBuffers;
-
   std::vector<VkSemaphore> imageAvailableSemaphores;
   std::vector<VkSemaphore> renderFinishedSemaphores;
   std::vector<VkFence> inFlightFences;
 
   VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
-
-  VkImage colorImage;
-  VkDeviceMemory colorImageMemory;
-  VkImageView colorImageView;
 
   bool framebufferResized = false;
   uint32_t currentFrame = 0;
@@ -197,9 +194,9 @@ class SmVulkanRendererSystem {
   }
 
   void cleanUpSwapChain() {
-    vkDestroyImageView(devices.device, colorImageView, nullptr);
-    vkDestroyImage(devices.device, colorImage, nullptr);
-    vkFreeMemory(devices.device, colorImageMemory, nullptr);
+    vkDestroyImageView(devices.device, color_image.colorImageView, nullptr);
+    vkDestroyImage(devices.device, color_image.colorImage, nullptr);
+    vkFreeMemory(devices.device, color_image.colorImageMemory, nullptr);
 
     vkDestroyImageView(devices.device, depth_buffers.depthImageView, nullptr);  // dif
     vkDestroyImage(devices.device, depth_buffers.depthImage, nullptr);          // dif
@@ -646,7 +643,7 @@ class SmVulkanRendererSystem {
     swap_chain.swapChainFramebuffers.resize(swap_chain.swapChainImageViews.size());
     for (size_t i = 0; i < swap_chain.swapChainImageViews.size(); i++) {
       std::array<VkImageView, 3> attachments = {
-          colorImageView,
+          color_image.colorImageView,
           depth_buffers.depthImageView,
           swap_chain.swapChainImageViews[i],
       };
@@ -726,9 +723,9 @@ class SmVulkanRendererSystem {
 
     createImage(swap_chain.swapChainExtent.width, swap_chain.swapChainExtent.height, 1, msaaSamples, colorFormat,
                 VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, colorImage, colorImageMemory, devices.physical_device,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, color_image.colorImage, color_image.colorImageMemory, devices.physical_device,
                 devices.device);
-    colorImageView = createImageView(devices, colorImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+    color_image.colorImageView = createImageView(devices, color_image.colorImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
   }
 
   void createTextureSampler() {
