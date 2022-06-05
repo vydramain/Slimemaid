@@ -37,6 +37,7 @@
 #include "components/renderer/SmDescriptorPool.hpp"
 #include "components/renderer/SmDevices.hpp"
 #include "components/renderer/SmGLFWWindow.hpp"
+#include "components/renderer/SmInstance.hpp"
 #include "components/renderer/SmModelResources.hpp"
 #include "components/renderer/SmQueues.hpp"
 #include "components/renderer/SmSamplingFlags.hpp"
@@ -93,8 +94,8 @@ class SmVulkanRendererSystem {
  private:
   SmGLFWWindow window;
   SmSurface surface;
+  SmInstance instance;
 
-  VkInstance instance;
   VkDebugUtilsMessengerEXT debugMessenger;
 
   SmDevices devices;
@@ -246,11 +247,11 @@ class SmVulkanRendererSystem {
     vkDestroyDevice(devices.device, nullptr);
 
     if (enableValidationLayers) {
-      DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+      DestroyDebugUtilsMessengerEXT(instance.instance, debugMessenger, nullptr);
     }
 
-    vkDestroySurfaceKHR(instance, surface.surface_khr, nullptr);
-    vkDestroyInstance(instance, nullptr);
+    vkDestroySurfaceKHR(instance.instance, surface.surface_khr, nullptr);
+    vkDestroyInstance(instance.instance, nullptr);
     glfwDestroyWindow(window.glfw_window);
     glfwTerminate();
 
@@ -317,7 +318,7 @@ class SmVulkanRendererSystem {
       instanceCreateInfo.pNext = nullptr;
     }
 
-    if (VK_SUCCESS != vkCreateInstance(&instanceCreateInfo, nullptr, &instance)) {
+    if (VK_SUCCESS != vkCreateInstance(&instanceCreateInfo, nullptr, &instance.instance)) {
       throw std::runtime_error("Failed to create Vulkan instance");
     } else {
       std::cout << "Vulkan instance creation process ends with success..." << std::endl;
@@ -344,7 +345,7 @@ class SmVulkanRendererSystem {
     VkDebugUtilsMessengerCreateInfoEXT createInfo;
     fillDebugMessengerCreateInfoEXT(createInfo);
 
-    if (VK_SUCCESS != CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger)) {
+    if (VK_SUCCESS != CreateDebugUtilsMessengerEXT(instance.instance, &createInfo, nullptr, &debugMessenger)) {
       throw std::runtime_error("Failed to set up debug messenger");
     }
 
@@ -352,7 +353,7 @@ class SmVulkanRendererSystem {
   }
 
   void createSurface() {
-    if (VK_SUCCESS != glfwCreateWindowSurface(instance, window.glfw_window, nullptr, &surface.surface_khr)) {
+    if (VK_SUCCESS != glfwCreateWindowSurface(instance.instance, window.glfw_window, nullptr, &surface.surface_khr)) {
       throw std::runtime_error("Failed to create window surface_khr");
     }
 
@@ -361,14 +362,14 @@ class SmVulkanRendererSystem {
 
   void pickPhysicalDevice() {
     uint32_t deviceCount = 0;
-    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+    vkEnumeratePhysicalDevices(instance.instance, &deviceCount, nullptr);
 
     if (0 == deviceCount) {
       throw std::runtime_error("No GPUs with Vulkan support found");
     }
 
     std::vector<VkPhysicalDevice> tmp_devices(deviceCount);
-    vkEnumeratePhysicalDevices(instance, &deviceCount, tmp_devices.data());
+    vkEnumeratePhysicalDevices(instance.instance, &deviceCount, tmp_devices.data());
 
     for (const auto& tmp_device : tmp_devices) {
       if (isDeviceSuitable(tmp_device)) {
