@@ -22,7 +22,7 @@ VkShaderModule createShaderModule(SmDevices input_devices, const std::vector<cha
   shaderCreateInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
   VkShaderModule shaderModule;
-  if (VK_SUCCESS != vkCreateShaderModule(input_devices.device, &shaderCreateInfo, nullptr, &shaderModule)) {
+  if (VK_SUCCESS != vkCreateShaderModule(input_devices.logical_device, &shaderCreateInfo, nullptr, &shaderModule)) {
     throw std::runtime_error("Failed to create shader module");
   }
 

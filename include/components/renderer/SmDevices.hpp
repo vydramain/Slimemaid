@@ -2,8 +2,11 @@
 ------------------------------------
   Slimemaid Source Code (22.05.2022)
   This file is part of Slimemaid Source Code.
-  Component with devices information. Vulkan have physic and virtual devices.
-  These devices provide access to memory and commands queue and pools.
+  Vulkan separates the concept of physical and logical devices.
+  A physical logical_device usually represents a single complete implementation of Vulkan
+  (excluding instance-level functionality) available to the host, of which there are a finite number.
+  A logical logical_device represents an instance of that implementation with its own state
+  and resources independent of other logical devices.
 ------------------------------------
 */
 
@@ -14,10 +17,11 @@
 
 struct SmDevices {
   VkPhysicalDevice physical_device;
-  VkDevice device;
+  VkDevice logical_device;
 
   SmDevices() {
     physical_device = VK_NULL_HANDLE;
+    logical_device = VK_NULL_HANDLE;
   }
 };
 

@@ -17,9 +17,9 @@
 #include <vulkan/vulkan.h>
 
 struct SmDepthBuffers {
-  VkImage depthImage;
-  VkDeviceMemory depthImageMemory;
-  VkImageView depthImageView;
+  VkImage depth_image;
+  VkDeviceMemory depth_image_memory;
+  VkImageView depth_image_view;
 };
 
 #endif  // SLIMEMAID_SMDEPTHRESOURCES_HPP

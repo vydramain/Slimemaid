@@ -2,8 +2,9 @@
 ------------------------------------
   Slimemaid Source Code (04.06.2022)
   This file is part of Slimemaid Source Code.
-  Buffers represent linear arrays of data which are used for various purposes by binding them to
-  a uniform buffers objects.
+  Uniform buffer contains the UBO data for the shaders.
+  Multiple buffers, because multiple frames may be in flight at the same time we don't need to update the buffer
+  in preparation of the next frame while a previous one is still reading from it.
 ------------------------------------
 */
 
@@ -15,8 +16,8 @@
 #include <vector>
 
 struct SmUniformBuffers {
-  std::vector<VkBuffer> uniformBuffers;
-  std::vector<VkDeviceMemory> uniformBuffersMemory;
+  std::vector<VkBuffer> uniform_buffers;
+  std::vector<VkDeviceMemory> uniform_buffers_memory;
 };
 
 #endif  // SLIMEMAID_SMUNIFORMBUFFERS_HPP

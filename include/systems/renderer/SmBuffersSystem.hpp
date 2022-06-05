@@ -50,6 +50,29 @@ void createBuffer(VkDevice& device,
   vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }
 
+void copyBuffer(SmDevices& devices,
+                SmCommandPool& command_pool,
+                SmQueues& queues,
+                VkBuffer input_src_buffer,
+                VkBuffer input_dst_buffer,
+                VkDeviceSize input_buffer_size) {
+  VkCommandBuffer commandBuffer = beginSingleTimeCommands(devices.logical_device,
+                                                          command_pool.command_pool);
+
+  VkBufferCopy copyRegion{};
+  copyRegion.srcOffset = 0;  // Optional
+  copyRegion.dstOffset = 0;  // Optional
+  copyRegion.size = input_buffer_size;
+  vkCmdCopyBuffer(commandBuffer,
+                  input_src_buffer,
+                  input_dst_buffer,
+                  1,
+                  &copyRegion);
+
+  endSingleTimeCommands(devices.logical_device, command_pool.command_pool, queues.graphics_queue,
+                        commandBuffer);
+}
+
 void copyBufferToImage(VkDevice inputDevice,
                        VkCommandPool inputCommandPool,
                        VkQueue inputGraphicsQueue,

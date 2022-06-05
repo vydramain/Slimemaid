@@ -2,7 +2,9 @@
 ------------------------------------
   Slimemaid Source Code (20.05.2022)
   This file is part of Slimemaid Source Code.
-  UBO or UniformBufferObject is object that describe every buffered model for any of graphics pipeline needs.
+  A model-view-projection matrix for 3D graphics is required to describe the component. Uniform buffer object is object
+  that describe every buffered model for graphics pipeline needs.
+  UBO (Uniform buffer object) is raw loaded model for transformations that descriptors can make.
 ------------------------------------
 */
 

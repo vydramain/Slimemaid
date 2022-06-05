@@ -1,8 +1,13 @@
 # Slimemaid
-This is graduation project
+
+***
 
 # Description
+This is my vision of the game engine and slime imitation.
+I use this example of [ECS pattern](https://austinmorlan.com/posts/entity_component_system/) for engine logic.
+Also, I use direct Vulkan renderer for code [speed?] and [light?].
 This version wrote on Linux and adapted only for this platform. Try it on MacOS and Windows at your own risk.
+Plannig make version for Android.
 
 # Instuctions
 

@@ -10,7 +10,7 @@
 
 #include <cstdint> // Necessary for uint32_t
 
-struct Frame {
+struct SmFrame {
    uint32_t WIDTH = 800;
    uint32_t HEIGHT = 600;
 };

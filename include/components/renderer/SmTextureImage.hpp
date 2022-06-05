@@ -17,7 +17,7 @@
 #include <cstdint>  // Necessary for uint32_t
 
 struct SmTextureImage {
-  uint32_t mipLevels;
+  uint32_t mip_levels;
   VkImage texture_image;
   VkDeviceMemory texture_image_memory;
 };

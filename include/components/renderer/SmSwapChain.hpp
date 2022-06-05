@@ -16,12 +16,13 @@
 #include <vector>
 
 struct SmSwapChain {
-  VkSwapchainKHR swapChain;
-  std::vector<VkImage> swapChainImages;
-  VkFormat swapChainImageFormat;
-  VkExtent2D swapChainExtent;
-  std::vector<VkImageView> swapChainImageViews;
-  std::vector<VkFramebuffer> swapChainFramebuffers;
+  VkSwapchainKHR swap_chain;
+  std::vector<VkImage> swap_chain_images;
+  std::vector<VkImageView> swap_chain_image_views;
+
+  VkFormat swap_chain_image_format;
+  VkExtent2D swap_chain_extent;
+  std::vector<VkFramebuffer> swap_chain_frame_buffers;
 };
 
 #endif  // SLIMEMAID_SMSWAPCHAIN_HPP

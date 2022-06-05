@@ -14,24 +14,24 @@
 #include <cstring>
 #include <iostream>
 
-#include "components/renderer/Vertex.hpp"
-#include "components/renderer/SmSwapChain.hpp"
 #include "components/renderer/SmGraphicsPipeline.hpp"
-
-#include "systems/renderer/SmShaderSystem.hpp"
+#include "components/renderer/SmSwapChain.hpp"
+#include "components/renderer/SmVertex.hpp"
 #include "systems/reader/SmFlieReaderSystem.hpp"
+#include "systems/renderer/SmShaderSystem.hpp"
 
 void createGraphicsPipeline(const std::string& input_vertex_shader_path,
                             const std::string& input_fragment_shader_path,
-                            SmDevices input_devices,
+                            SmDevices& devices,
                             const SmSwapChain& input_swap_chain,
+                            SmDescriptorPool& descriptor_pool,
                             SmGraphicsPipeline& graphics_pipeline,
                             VkSampleCountFlagBits input_msaa_samples) {
   auto vertShaderCode = readFile(input_vertex_shader_path);
   auto fragShaderCode = readFile(input_fragment_shader_path);
 
-  VkShaderModule vertShaderModule = createShaderModule(input_devices, vertShaderCode);
-  VkShaderModule fragShaderModule = createShaderModule(input_devices, fragShaderCode);
+  VkShaderModule vertShaderModule = createShaderModule(devices, vertShaderCode);
+  VkShaderModule fragShaderModule = createShaderModule(devices, fragShaderCode);
 
   VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
   vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -49,8 +49,8 @@ void createGraphicsPipeline(const std::string& input_vertex_shader_path,
 
   VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
-  auto bindingDescription = Vertex::getBindingDescription();
-  auto attributeDescriptions = Vertex::getAttributeDescriptions();
+  auto bindingDescription = SmVertex::get_binding_description();
+  auto attributeDescriptions = SmVertex::get_attribute_descriptions();
 
   VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
   vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -67,14 +67,14 @@ void createGraphicsPipeline(const std::string& input_vertex_shader_path,
   VkViewport viewport{};
   viewport.x = 0.0f;
   viewport.y = 0.0f;
-  viewport.height = (float) input_swap_chain.swapChainExtent.height;
-  viewport.width = (float) input_swap_chain.swapChainExtent.width;
+  viewport.height = (float) input_swap_chain.swap_chain_extent.height;
+  viewport.width = (float) input_swap_chain.swap_chain_extent.width;
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
 
   VkRect2D scissor{};
   scissor.offset = {0, 0};
-  scissor.extent = input_swap_chain.swapChainExtent;
+  scissor.extent = input_swap_chain.swap_chain_extent;
 
   VkPipelineViewportStateCreateInfo viewportStateCreateInfo{};
   viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -148,11 +148,11 @@ void createGraphicsPipeline(const std::string& input_vertex_shader_path,
   VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
   pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutCreateInfo.setLayoutCount = 1;
-  pipelineLayoutCreateInfo.pSetLayouts = &graphics_pipeline.descriptor_set_layout;
+  pipelineLayoutCreateInfo.pSetLayouts = &descriptor_pool.descriptor_set_layout;
   pipelineLayoutCreateInfo.pushConstantRangeCount = 0;     // Optional
   pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;  // Optional
 
-  if (VK_SUCCESS != vkCreatePipelineLayout(input_devices.device,
+  if (VK_SUCCESS != vkCreatePipelineLayout(devices.logical_device,
                                            &pipelineLayoutCreateInfo,
                                            nullptr,
                                            &graphics_pipeline.pipeline_layout)) {
@@ -177,7 +177,7 @@ void createGraphicsPipeline(const std::string& input_vertex_shader_path,
   pipelineCreateInfo.basePipelineIndex = -1;
   pipelineCreateInfo.pDynamicState = nullptr;
 
-  if (VK_SUCCESS !=vkCreateGraphicsPipelines(input_devices.device,
+  if (VK_SUCCESS !=vkCreateGraphicsPipelines(devices.logical_device,
                                               VK_NULL_HANDLE,
                                               1,
                                               &pipelineCreateInfo,
@@ -186,8 +186,8 @@ void createGraphicsPipeline(const std::string& input_vertex_shader_path,
     throw std::runtime_error("Failed to create graphics pipeline");
   }
 
-  vkDestroyShaderModule(input_devices.device, vertShaderModule, nullptr);
-  vkDestroyShaderModule(input_devices.device, fragShaderModule, nullptr);
+  vkDestroyShaderModule(devices.logical_device, vertShaderModule, nullptr);
+  vkDestroyShaderModule(devices.logical_device, fragShaderModule, nullptr);
 
   std::cout << "Graphics pipeline creation process ends with success..." << std::endl;
 }

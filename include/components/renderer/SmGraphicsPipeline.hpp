@@ -27,7 +27,6 @@ struct SmGraphicsPipeline {
   VkRenderPass render_pass;
   VkPipeline pipeline;
   VkPipelineLayout pipeline_layout;
-  VkDescriptorSetLayout descriptor_set_layout;
 };
 
 #endif  // SLIMEMAID_SMGRAPHICSPIPELINE_HPP

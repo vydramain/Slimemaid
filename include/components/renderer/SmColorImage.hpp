@@ -18,9 +18,9 @@
 #include <vulkan/vulkan.h>
 
 struct SmColorImage {
-  VkImage colorImage;
-  VkDeviceMemory colorImageMemory;
-  VkImageView colorImageView;
+  VkImage color_image;
+  VkDeviceMemory color_image_memory;
+  VkImageView color_image_view;
 };
 
 #endif  // SLIMEMAID_SMCOLORIMAGE_HPP

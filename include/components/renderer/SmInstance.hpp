@@ -2,8 +2,8 @@
 ------------------------------------
   Slimemaid Source Code (04.06.2022)
   This file is part of Slimemaid Source Code.
-  Instance object initializes the Vulkan library and
-  allows the application to pass information about itself to the implementation.
+  The instance is the connection between your application and the Vulkan library
+  and creating it involves specifying some details about your application to the driver.
 ------------------------------------
 */
 

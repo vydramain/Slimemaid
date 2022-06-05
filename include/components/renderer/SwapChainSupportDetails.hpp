@@ -2,9 +2,11 @@
 ------------------------------------
   Slimemaid Source Code (20.05.2022)
   This file is part of Slimemaid Source Code.
-  Struct SwapChainSupportDetails keeps information about vectors of
-  VkSurfaceFormatKHR and VkPresentModeKHR objects.
-  This objects keeps swap chain information of current render primitives.
+  Component need for checking swap chain compability with window surface. There are basically three kinds of properties
+  need to check:
+    - Basic surface capabilities (min/max number of images in swap chain, min/max width and height of images)
+    - Surface formats (pixel format, color space)
+    - Available presentation modes
 ------------------------------------
 */
 
@@ -18,7 +20,7 @@
 struct SwapChainSupportDetails {
   VkSurfaceCapabilitiesKHR capabilities;
   std::vector<VkSurfaceFormatKHR> formats;
-  std::vector<VkPresentModeKHR> presentModes;
+  std::vector<VkPresentModeKHR> present_modes;
 };
 
 #endif // SLIMEMAID_SWAPCHAINSUPPORTDETAILS_HPP

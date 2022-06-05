@@ -11,19 +11,19 @@
 
 #include <vulkan/vulkan.h>
 
-#include <vector>
 #include <cstdint>  // Necessary for uint32_t
+#include <vector>
 
-#include "components/renderer/Vertex.hpp"
+#include "components/renderer/SmVertex.hpp"
 
 struct SmModelResources {
-  std::vector<Vertex> vertices;  // {{rel_x, rel_y, rel_z}, {R, G, B}, {tex_rel_x, tex_rel_x}}
-  VkBuffer vertexBuffer;
-  VkDeviceMemory vertexBufferMemory;
+  std::vector<SmVertex> vertices;  // {{rel_x, rel_y, rel_z}, {R, G, B}, {tex_rel_x, tex_rel_x}}
+  VkBuffer vertex_buffer;
+  VkDeviceMemory vertex_buffer_memory;
 
   std::vector<uint32_t> indices;
-  VkBuffer indexBuffer;
-  VkDeviceMemory indexBufferMemory;
+  VkBuffer index_buffer;
+  VkDeviceMemory index_buffer_memory;
 };
 
 #endif  // SLIMEMAID_SMMODELRESOURCES_HPP

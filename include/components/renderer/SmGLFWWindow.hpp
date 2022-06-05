@@ -2,7 +2,6 @@
 ------------------------------------
   Slimemaid Source Code (22.05.2022)
   This file is part of Slimemaid Source Code.
-  SmGLFWWindow component keeps GLFW window.
 ------------------------------------
 */
 

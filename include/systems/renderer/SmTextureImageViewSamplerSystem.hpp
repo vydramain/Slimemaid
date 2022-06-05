@@ -34,7 +34,7 @@ VkImageView createImageView(SmDevices devices,
   viewInfo.subresourceRange.layerCount = 1;
 
   VkImageView imageView;
-  if (vkCreateImageView(devices.device, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+  if (vkCreateImageView(devices.logical_device, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create texture image view");
   }
 
