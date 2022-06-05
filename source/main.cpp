@@ -39,6 +39,7 @@
 #include "components/renderer/SmGLFWWindow.hpp"
 #include "components/renderer/SmModelResources.hpp"
 #include "components/renderer/SmQueues.hpp"
+#include "components/renderer/SmSamplingFlags.hpp"
 #include "components/renderer/SmSurface.hpp"
 #include "components/renderer/SmSwapChain.hpp"
 #include "components/renderer/SmTextureImage.hpp"
@@ -108,12 +109,11 @@ class SmVulkanRendererSystem {
   SmCommandPool command_pool;
   SmDescriptorPool descriptor_pool;
   SmUniformBuffers uniform_buffers;
+  SmSamplingFlags msaa_samples;
 
   std::vector<VkSemaphore> imageAvailableSemaphores;
   std::vector<VkSemaphore> renderFinishedSemaphores;
   std::vector<VkFence> inFlightFences;
-
-  VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
   bool framebufferResized = false;
   uint32_t currentFrame = 0;
@@ -149,7 +149,7 @@ class SmVulkanRendererSystem {
                            devices,
                            swap_chain,
                            graphics_pipeline,
-                           msaaSamples);
+                           msaa_samples.msaaSamples);
     createCommandPool();
     createDepthResources();
     createColorResources();
@@ -277,7 +277,7 @@ class SmVulkanRendererSystem {
                            devices,
                            swap_chain,
                            graphics_pipeline,
-                           msaaSamples);
+                           msaa_samples.msaaSamples);
     createDepthResources();
     createColorResources();
     createFramebuffers();
@@ -373,7 +373,7 @@ class SmVulkanRendererSystem {
     for (const auto& tmp_device : tmp_devices) {
       if (isDeviceSuitable(tmp_device)) {
         devices.physical_device = tmp_device;
-        msaaSamples = getMaxUsableSampleCount();
+        msaa_samples.msaaSamples = getMaxUsableSampleCount();
         break;
       }
     }
@@ -531,7 +531,7 @@ class SmVulkanRendererSystem {
   void createRenderPass() {
     VkAttachmentDescription colorAttachmentDescription{};
     colorAttachmentDescription.format = swap_chain.swapChainImageFormat;
-    colorAttachmentDescription.samples = msaaSamples;
+    colorAttachmentDescription.samples = msaa_samples.msaaSamples;
     colorAttachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorAttachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     colorAttachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -541,7 +541,7 @@ class SmVulkanRendererSystem {
 
     VkAttachmentDescription depthAttachmentDescription{};
     depthAttachmentDescription.format = findDepthFormat();
-    depthAttachmentDescription.samples = msaaSamples;
+    depthAttachmentDescription.samples = msaa_samples.msaaSamples;
     depthAttachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depthAttachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     depthAttachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -681,7 +681,7 @@ class SmVulkanRendererSystem {
   void createDepthResources() {
     VkFormat depthFormat = findDepthFormat();
 
-    createImage(swap_chain.swapChainExtent.width, swap_chain.swapChainExtent.height, 1, msaaSamples, depthFormat,
+    createImage(swap_chain.swapChainExtent.width, swap_chain.swapChainExtent.height, 1, msaa_samples.msaaSamples, depthFormat,
                 VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depth_buffers.depthImage, depth_buffers.depthImageMemory,
                 devices.physical_device, devices.device);
@@ -718,7 +718,7 @@ class SmVulkanRendererSystem {
   void createColorResources() {
     VkFormat colorFormat = swap_chain.swapChainImageFormat;
 
-    createImage(swap_chain.swapChainExtent.width, swap_chain.swapChainExtent.height, 1, msaaSamples, colorFormat,
+    createImage(swap_chain.swapChainExtent.width, swap_chain.swapChainExtent.height, 1, msaa_samples.msaaSamples, colorFormat,
                 VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, color_image.colorImage, color_image.colorImageMemory, devices.physical_device,
                 devices.device);
