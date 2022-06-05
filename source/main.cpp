@@ -43,8 +43,9 @@
 #include "components/renderer/SmSwapChain.hpp"
 #include "components/renderer/SmTextureImage.hpp"
 #include "components/renderer/SmTextureImageViewSampler.hpp"
+#include "components/renderer/SmUniformBufferObject.hpp"
+#include "components/renderer/SmUniformBuffers.hpp"
 #include "components/renderer/SwapChainSupportDetails.hpp"
-#include "components/renderer/UniformBufferObject.hpp"
 #include "components/renderer/Vertex.hpp"
 #include "systems/renderer/SmBuffersSystem.hpp"
 #include "systems/renderer/SmCommandsSystem.hpp"
@@ -106,9 +107,7 @@ class SmVulkanRendererSystem {
   SmColorImage color_image;
   SmCommandPool command_pool;
   SmDescriptorPool descriptor_pool;
-
-  std::vector<VkBuffer> uniformBuffers;
-  std::vector<VkDeviceMemory> uniformBuffersMemory;
+  SmUniformBuffers uniform_buffers;
 
   std::vector<VkSemaphore> imageAvailableSemaphores;
   std::vector<VkSemaphore> renderFinishedSemaphores;
@@ -226,8 +225,8 @@ class SmVulkanRendererSystem {
     vkFreeMemory(devices.device, texture_model_resources.texture_image_memory, nullptr);
 
     for (size_t i = 0; i < command_pool.MAX_FRAMES_IN_FLIGHT; i++) {
-      vkDestroyBuffer(devices.device, uniformBuffers[i], nullptr);
-      vkFreeMemory(devices.device, uniformBuffersMemory[i], nullptr);
+      vkDestroyBuffer(devices.device, uniform_buffers.uniformBuffers[i], nullptr);
+      vkFreeMemory(devices.device, uniform_buffers.uniformBuffersMemory[i], nullptr);
     }
 
     vkDestroyDescriptorPool(devices.device, descriptor_pool.descriptorPool, nullptr);
@@ -811,15 +810,15 @@ class SmVulkanRendererSystem {
   }
 
   void createUniformBuffers() {
-    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+    VkDeviceSize bufferSize = sizeof(SmUniformBufferObject);
 
-    uniformBuffers.resize(command_pool.MAX_FRAMES_IN_FLIGHT);
-    uniformBuffersMemory.resize(command_pool.MAX_FRAMES_IN_FLIGHT);
+    uniform_buffers.uniformBuffers.resize(command_pool.MAX_FRAMES_IN_FLIGHT);
+    uniform_buffers.uniformBuffersMemory.resize(command_pool.MAX_FRAMES_IN_FLIGHT);
 
     for (size_t i = 0; i < command_pool.MAX_FRAMES_IN_FLIGHT; i++) {
       createBuffer(devices.device, devices.physical_device, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i],
-                   uniformBuffersMemory[i]);
+                   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniform_buffers.uniformBuffers[i],
+                   uniform_buffers.uniformBuffersMemory[i]);
     }
 
     std::cout << "Uniform buffer creation process ends with success..." << std::endl;
@@ -872,9 +871,9 @@ class SmVulkanRendererSystem {
 
     for (size_t i = 0; i < command_pool.MAX_FRAMES_IN_FLIGHT; i++) {
       VkDescriptorBufferInfo bufferInfo{};
-      bufferInfo.buffer = uniformBuffers[i];
+      bufferInfo.buffer = uniform_buffers.uniformBuffers[i];
       bufferInfo.offset = 0;
-      bufferInfo.range = sizeof(UniformBufferObject);
+      bufferInfo.range = sizeof(SmUniformBufferObject);
 
       VkDescriptorImageInfo imageInfo{};
       imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -1287,7 +1286,7 @@ class SmVulkanRendererSystem {
     auto currentTime = std::chrono::high_resolution_clock::now();
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-    UniformBufferObject ubo{};
+    SmUniformBufferObject ubo{};
     ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(20.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.proj = glm::perspective(
@@ -1296,9 +1295,9 @@ class SmVulkanRendererSystem {
 
     // Bug reason is:
     void* data;
-    vkMapMemory(devices.device, uniformBuffersMemory.at(currentImage), 0, (VkDeviceSize) sizeof(ubo), 0, &data);
+    vkMapMemory(devices.device, uniform_buffers.uniformBuffersMemory.at(currentImage), 0, (VkDeviceSize) sizeof(ubo), 0, &data);
     memcpy(data, &ubo, sizeof(ubo));
-    vkUnmapMemory(devices.device, uniformBuffersMemory.at(currentImage));
+    vkUnmapMemory(devices.device, uniform_buffers.uniformBuffersMemory.at(currentImage));
   }
 
  public:

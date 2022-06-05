@@ -6,8 +6,8 @@
 ------------------------------------
 */
 
-#ifndef SLIMEMAID_UNIFORMBUFFEROBJECT_HPP
-#define SLIMEMAID_UNIFORMBUFFEROBJECT_HPP
+#ifndef SLIMEMAID_SMUNIFORMBUFFEROBJECT_HPP
+#define SLIMEMAID_SMUNIFORMBUFFEROBJECT_HPP
 
 #define GLM_FORCE_RADIANS
 #define GLM_ENABLE_EXPERIMENTAL
@@ -17,11 +17,10 @@
 #include <glm/gtx/hash.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-struct UniformBufferObject {
+struct SmUniformBufferObject {
   alignas(16) glm::mat4 model;
   alignas(16) glm::mat4 view;
   alignas(16) glm::mat4 proj;
 };
 
-#endif // SLIMEMAID_UNIFORMBUFFEROBJECT_HPP
-
+#endif  // SLIMEMAID_SMUNIFORMBUFFEROBJECT_HPP
