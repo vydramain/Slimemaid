@@ -156,13 +156,8 @@ class SmVulkanRendererSystem {
     createDepthResources();
     createColorResources();
     createFramebuffers();
-    createTextureImage(devices.logical_device,
-                       devices.physical_device,
-                       command_pool.command_pool,
-                       queues.graphics_queue,
-                       texture_model_resources.mip_levels,
-                       texture_model_resources.texture_image,
-                       texture_model_resources.texture_image_memory);
+    create_texture_image(devices, command_pool.command_pool, queues.graphics_queue, texture_model_resources.mip_levels,
+                         texture_model_resources.texture_image, texture_model_resources.texture_image_memory);
     createTextureImageView(devices,
                            texture_model_resources,
                            texture_model_resources_read_handler,
@@ -684,14 +679,30 @@ class SmVulkanRendererSystem {
   void createDepthResources() {
     VkFormat depthFormat = findDepthFormat();
 
-    createImage(swap_chain.swap_chain_extent.width, swap_chain.swap_chain_extent.height, 1, msaa_samples.msaa_samples, depthFormat,
-                VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depth_buffers.depth_image, depth_buffers.depth_image_memory,
-                devices.physical_device, devices.logical_device);
-    depth_buffers.depth_image_view =
-        createImageView(devices, depth_buffers.depth_image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
-    transitionImageLayout(devices.logical_device, command_pool.command_pool, queues.graphics_queue, depth_buffers.depth_image, depthFormat,
-                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
+    create_image(swap_chain.swap_chain_extent.width,
+                 swap_chain.swap_chain_extent.height,
+                 1,
+                 msaa_samples.msaa_samples,
+                 depthFormat,
+                 VK_IMAGE_TILING_OPTIMAL,
+                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                 depth_buffers.depth_image,
+                 depth_buffers.depth_image_memory,
+                 devices);
+    depth_buffers.depth_image_view =createImageView(devices,
+                                                     depth_buffers.depth_image,
+                                                     depthFormat,
+                                                     VK_IMAGE_ASPECT_DEPTH_BIT,
+                                                     1);
+    transition_image_layout(devices,
+                            command_pool.command_pool,
+                            queues.graphics_queue,
+                            depth_buffers.depth_image,
+                            depthFormat,
+                            VK_IMAGE_LAYOUT_UNDEFINED,
+                            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                            1);
 
     std::cout << "Depth resources creation process ends with success..." << std::endl;
   }
@@ -721,10 +732,17 @@ class SmVulkanRendererSystem {
   void createColorResources() {
     VkFormat colorFormat = swap_chain.swap_chain_image_format;
 
-    createImage(swap_chain.swap_chain_extent.width, swap_chain.swap_chain_extent.height, 1, msaa_samples.msaa_samples, colorFormat,
-                VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, color_image.color_image, color_image.color_image_memory, devices.physical_device,
-                devices.logical_device);
+    create_image(swap_chain.swap_chain_extent.width,
+                 swap_chain.swap_chain_extent.height,
+                 1,
+                 msaa_samples.msaa_samples,
+                 colorFormat,
+                 VK_IMAGE_TILING_OPTIMAL,
+                 VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                 color_image.color_image,
+                 color_image.color_image_memory,
+                 devices);
     color_image.color_image_view = createImageView(devices, color_image.color_image, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
   }
 
