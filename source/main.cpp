@@ -36,7 +36,6 @@
 #include "components/renderer/SmDevices.hpp"
 #include "components/renderer/SmFrame.hpp"
 #include "components/renderer/SmGLFWWindow.hpp"
-#include "components/renderer/SmInstance.hpp"
 #include "components/renderer/SmModelResources.hpp"
 #include "components/renderer/SmQueueFamilyIndices.hpp"
 #include "components/renderer/SmQueues.hpp"
@@ -48,7 +47,9 @@
 #include "components/renderer/SmUniformBufferObject.hpp"
 #include "components/renderer/SmUniformBuffers.hpp"
 #include "components/renderer/SmVertex.hpp"
+#include "components/renderer/SmVulkanInstance.hpp"
 #include "components/renderer/SwapChainSupportDetails.hpp"
+#include "systems/debug/SmDebugSystem.hpp"
 #include "systems/renderer/SmBuffersSystem.hpp"
 #include "systems/renderer/SmCommandsSystem.hpp"
 #include "systems/renderer/SmGraphicsPipelineSystem.hpp"
@@ -71,30 +72,11 @@ const bool enableValidationLayers = false;
 const bool enableValidationLayers = true;
 #endif
 
-VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-                                      const VkAllocationCallbacks* pAllocator,
-                                      VkDebugUtilsMessengerEXT* pDebugMessenger) {
-  auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-  if (nullptr != func) {
-    return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-  } else {
-    return VK_ERROR_EXTENSION_NOT_PRESENT;
-  }
-}
-
-void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger,
-                                   const VkAllocationCallbacks* pAllocator) {
-  auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
-  if (nullptr != func) {
-    func(instance, debugMessenger, pAllocator);
-  }
-}
-
 class SmVulkanRendererSystem {
  private:
   SmGLFWWindow window;
   SmSurface surface;
-  SmInstance instance;
+  SmVulkanInstance instance;
 
   VkDebugUtilsMessengerEXT debugMessenger;
 
@@ -145,22 +127,15 @@ class SmVulkanRendererSystem {
     createImageViews();
     createRenderPass();
     createDescriptorSetLayout();
-    createGraphicsPipeline(VERTEX_SHADERS_PATH,
-                           FRAGMENT_SHADERS_PATH,
-                           devices,
-                           swap_chain,
-                           descriptor_pool,
-                           graphics_pipeline,
-                           msaa_samples.msaa_samples);
+    createGraphicsPipeline(VERTEX_SHADERS_PATH, FRAGMENT_SHADERS_PATH, devices, swap_chain, descriptor_pool,
+                           graphics_pipeline, msaa_samples.msaa_samples);
     createCommandPool();
     createDepthResources();
     createColorResources();
     createFramebuffers();
     create_texture_image(devices, command_pool.command_pool, queues.graphics_queue, texture_model_resources.mip_levels,
                          texture_model_resources.texture_image, texture_model_resources.texture_image_memory);
-    createTextureImageView(devices,
-                           texture_model_resources,
-                           texture_model_resources_read_handler,
+    createTextureImageView(devices, texture_model_resources, texture_model_resources_read_handler,
                            texture_model_resources.mip_levels);
     createTextureSampler();
     loadModel(scene_model_resources);
@@ -193,7 +168,7 @@ class SmVulkanRendererSystem {
     vkFreeMemory(devices.logical_device, color_image.color_image_memory, nullptr);
 
     vkDestroyImageView(devices.logical_device, depth_buffers.depth_image_view, nullptr);  // dif
-    vkDestroyImage(devices.logical_device, depth_buffers.depth_image, nullptr);          // dif
+    vkDestroyImage(devices.logical_device, depth_buffers.depth_image, nullptr);           // dif
     vkFreeMemory(devices.logical_device, depth_buffers.depth_image_memory, nullptr);      // dif
 
     for (auto framebuffer : swap_chain.swap_chain_frame_buffers) {
@@ -243,7 +218,7 @@ class SmVulkanRendererSystem {
     vkDestroyDevice(devices.logical_device, nullptr);
 
     if (enableValidationLayers) {
-      DestroyDebugUtilsMessengerEXT(instance.instance, debugMessenger, nullptr);
+      destroy_debug_utils_messenger_EXT(instance.instance, debugMessenger, nullptr);
     }
 
     vkDestroySurfaceKHR(instance.instance, surface.surface_khr, nullptr);
@@ -269,13 +244,8 @@ class SmVulkanRendererSystem {
     createSwapChain();
     createImageViews();
     createRenderPass();
-    createGraphicsPipeline(VERTEX_SHADERS_PATH,
-                           FRAGMENT_SHADERS_PATH,
-                           devices,
-                           swap_chain,
-                           descriptor_pool,
-                           graphics_pipeline,
-                           msaa_samples.msaa_samples);
+    createGraphicsPipeline(VERTEX_SHADERS_PATH, FRAGMENT_SHADERS_PATH, devices, swap_chain, descriptor_pool,
+                           graphics_pipeline, msaa_samples.msaa_samples);
     createDepthResources();
     createColorResources();
     createFramebuffers();
@@ -316,9 +286,9 @@ class SmVulkanRendererSystem {
     }
 
     if (VK_SUCCESS != vkCreateInstance(&instanceCreateInfo, nullptr, &instance.instance)) {
-      throw std::runtime_error("Failed to create Vulkan instance");
+      throw std::runtime_error("Failed to create Vulkan p_instance");
     } else {
-      std::cout << "Vulkan instance creation process ends with success..." << std::endl;
+      std::cout << "Vulkan p_instance creation process ends with success..." << std::endl;
     }
   }
 
@@ -342,7 +312,7 @@ class SmVulkanRendererSystem {
     VkDebugUtilsMessengerCreateInfoEXT createInfo;
     fillDebugMessengerCreateInfoEXT(createInfo);
 
-    if (VK_SUCCESS != CreateDebugUtilsMessengerEXT(instance.instance, &createInfo, nullptr, &debugMessenger)) {
+    if (VK_SUCCESS != create_debug_utils_messenger_EXT(instance.instance, &createInfo, nullptr, &debugMessenger)) {
       throw std::runtime_error("Failed to set up debug messenger");
     }
 
@@ -507,7 +477,8 @@ class SmVulkanRendererSystem {
 
     vkGetSwapchainImagesKHR(devices.logical_device, swap_chain.swap_chain, &imageCount, nullptr);
     swap_chain.swap_chain_images.resize(imageCount);
-    vkGetSwapchainImagesKHR(devices.logical_device, swap_chain.swap_chain, &imageCount, swap_chain.swap_chain_images.data());
+    vkGetSwapchainImagesKHR(devices.logical_device, swap_chain.swap_chain, &imageCount,
+                            swap_chain.swap_chain_images.data());
 
     swap_chain.swap_chain_image_format = surfaceFormat.format;
     swap_chain.swap_chain_extent = tmpSwapChainExtent;
@@ -599,7 +570,8 @@ class SmVulkanRendererSystem {
     renderPassCreateInfo.dependencyCount = 1;
     renderPassCreateInfo.pDependencies = &subpassDependency;
 
-    if (VK_SUCCESS != vkCreateRenderPass(devices.logical_device, &renderPassCreateInfo, nullptr, &graphics_pipeline.render_pass)) {
+    if (VK_SUCCESS !=
+        vkCreateRenderPass(devices.logical_device, &renderPassCreateInfo, nullptr, &graphics_pipeline.render_pass)) {
       throw std::runtime_error("Failed to create render pass");
     }
 
@@ -627,7 +599,8 @@ class SmVulkanRendererSystem {
     layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
     layoutInfo.pBindings = bindings.data();
 
-    if (VK_SUCCESS != vkCreateDescriptorSetLayout(devices.logical_device, &layoutInfo, nullptr, &descriptor_pool.descriptor_set_layout)) {
+    if (VK_SUCCESS != vkCreateDescriptorSetLayout(devices.logical_device, &layoutInfo, nullptr,
+                                                  &descriptor_pool.descriptor_set_layout)) {
       throw std::runtime_error("Failed to create descriptor set layout");
     }
 
@@ -652,8 +625,8 @@ class SmVulkanRendererSystem {
       framebufferCreateInfo.height = swap_chain.swap_chain_extent.height;
       framebufferCreateInfo.layers = 1;
 
-      if (VK_SUCCESS !=
-          vkCreateFramebuffer(devices.logical_device, &framebufferCreateInfo, nullptr, &swap_chain.swap_chain_frame_buffers[i])) {
+      if (VK_SUCCESS != vkCreateFramebuffer(devices.logical_device, &framebufferCreateInfo, nullptr,
+                                            &swap_chain.swap_chain_frame_buffers[i])) {
         throw std::runtime_error("Failed to create framebuffer");
       }
     }
@@ -669,7 +642,8 @@ class SmVulkanRendererSystem {
     commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndices.graphics_family.value();
 
-    if (VK_SUCCESS != vkCreateCommandPool(devices.logical_device, &commandPoolCreateInfo, nullptr, &command_pool.command_pool)) {
+    if (VK_SUCCESS !=
+        vkCreateCommandPool(devices.logical_device, &commandPoolCreateInfo, nullptr, &command_pool.command_pool)) {
       throw std::runtime_error("Failed to create command pool");
     }
 
@@ -679,29 +653,14 @@ class SmVulkanRendererSystem {
   void createDepthResources() {
     VkFormat depthFormat = findDepthFormat();
 
-    create_image(swap_chain.swap_chain_extent.width,
-                 swap_chain.swap_chain_extent.height,
-                 1,
-                 msaa_samples.msaa_samples,
-                 depthFormat,
-                 VK_IMAGE_TILING_OPTIMAL,
-                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                 depth_buffers.depth_image,
-                 depth_buffers.depth_image_memory,
+    create_image(swap_chain.swap_chain_extent.width, swap_chain.swap_chain_extent.height, 1, msaa_samples.msaa_samples,
+                 depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depth_buffers.depth_image, depth_buffers.depth_image_memory,
                  devices);
-    depth_buffers.depth_image_view =createImageView(devices,
-                                                     depth_buffers.depth_image,
-                                                     depthFormat,
-                                                     VK_IMAGE_ASPECT_DEPTH_BIT,
-                                                     1);
-    transition_image_layout(devices,
-                            command_pool.command_pool,
-                            queues.graphics_queue,
-                            depth_buffers.depth_image,
-                            depthFormat,
-                            VK_IMAGE_LAYOUT_UNDEFINED,
-                            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    depth_buffers.depth_image_view =
+        createImageView(devices, depth_buffers.depth_image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+    transition_image_layout(devices, command_pool.command_pool, queues.graphics_queue, depth_buffers.depth_image,
+                            depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                             1);
 
     std::cout << "Depth resources creation process ends with success..." << std::endl;
@@ -732,18 +691,12 @@ class SmVulkanRendererSystem {
   void createColorResources() {
     VkFormat colorFormat = swap_chain.swap_chain_image_format;
 
-    create_image(swap_chain.swap_chain_extent.width,
-                 swap_chain.swap_chain_extent.height,
-                 1,
-                 msaa_samples.msaa_samples,
-                 colorFormat,
-                 VK_IMAGE_TILING_OPTIMAL,
+    create_image(swap_chain.swap_chain_extent.width, swap_chain.swap_chain_extent.height, 1, msaa_samples.msaa_samples,
+                 colorFormat, VK_IMAGE_TILING_OPTIMAL,
                  VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                 color_image.color_image,
-                 color_image.color_image_memory,
-                 devices);
-    color_image.color_image_view = createImageView(devices, color_image.color_image, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, color_image.color_image, color_image.color_image_memory, devices);
+    color_image.color_image_view =
+        createImageView(devices, color_image.color_image, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
   }
 
   void createTextureSampler() {
@@ -784,8 +737,8 @@ class SmVulkanRendererSystem {
 
     for (size_t i = 0; i < command_pool.MAX_FRAMES_IN_FLIGHT; i++) {
       createBuffer(devices.logical_device, devices.physical_device, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniform_buffers.uniform_buffers[i],
-                   uniform_buffers.uniform_buffers_memory[i]);
+                   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                   uniform_buffers.uniform_buffers[i], uniform_buffers.uniform_buffers_memory[i]);
     }
 
     std::cout << "Uniform buffer creation process ends with success..." << std::endl;
@@ -816,7 +769,8 @@ class SmVulkanRendererSystem {
     descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSizes.data();
     descriptorPoolCreateInfo.maxSets = static_cast<uint32_t>(command_pool.MAX_FRAMES_IN_FLIGHT);
 
-    if (VK_SUCCESS != vkCreateDescriptorPool(devices.logical_device, &descriptorPoolCreateInfo, nullptr, &descriptor_pool.descriptor_pool)) {
+    if (VK_SUCCESS != vkCreateDescriptorPool(devices.logical_device, &descriptorPoolCreateInfo, nullptr,
+                                             &descriptor_pool.descriptor_pool)) {
       throw std::runtime_error("Failed to create descriptor pool for uniform buffers");
     }
 
@@ -824,7 +778,8 @@ class SmVulkanRendererSystem {
   }
 
   void createDescriptorSets() {
-    std::vector<VkDescriptorSetLayout> layouts(command_pool.MAX_FRAMES_IN_FLIGHT, descriptor_pool.descriptor_set_layout);
+    std::vector<VkDescriptorSetLayout> layouts(command_pool.MAX_FRAMES_IN_FLIGHT,
+                                               descriptor_pool.descriptor_set_layout);
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = descriptor_pool.descriptor_pool;
@@ -832,7 +787,8 @@ class SmVulkanRendererSystem {
     allocInfo.pSetLayouts = layouts.data();
 
     descriptor_pool.descriptor_sets.resize(command_pool.MAX_FRAMES_IN_FLIGHT);
-    if (vkAllocateDescriptorSets(devices.logical_device, &allocInfo, descriptor_pool.descriptor_sets.data()) != VK_SUCCESS) {
+    if (vkAllocateDescriptorSets(devices.logical_device, &allocInfo, descriptor_pool.descriptor_sets.data()) !=
+        VK_SUCCESS) {
       throw std::runtime_error("Failed to allocate descriptor sets for uniform buffers");
     }
 
@@ -864,8 +820,8 @@ class SmVulkanRendererSystem {
       descriptorWrites[1].descriptorCount = 1;
       descriptorWrites[1].pImageInfo = &imageInfo;
 
-      vkUpdateDescriptorSets(devices.logical_device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0,
-                             nullptr);
+      vkUpdateDescriptorSets(devices.logical_device, static_cast<uint32_t>(descriptorWrites.size()),
+                             descriptorWrites.data(), 0, nullptr);
     }
 
     std::cout << "Descriptor sets creation process ends with success..." << std::endl;
@@ -880,7 +836,8 @@ class SmVulkanRendererSystem {
     commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     commandBufferAllocateInfo.commandBufferCount = (uint32_t) command_pool.command_buffers.size();
 
-    if (VK_SUCCESS != vkAllocateCommandBuffers(devices.logical_device, &commandBufferAllocateInfo, command_pool.command_buffers.data())) {
+    if (VK_SUCCESS != vkAllocateCommandBuffers(devices.logical_device, &commandBufferAllocateInfo,
+                                               command_pool.command_buffers.data())) {
       throw std::runtime_error("Failed to allocate command buffers");
     }
 
@@ -1056,7 +1013,8 @@ class SmVulkanRendererSystem {
 
     if (0 != presentModeCount) {
       details.present_modes.resize(presentModeCount);
-      vkGetPhysicalDeviceSurfacePresentModesKHR(input_device, surface.surface_khr, &presentModeCount, details.present_modes.data());
+      vkGetPhysicalDeviceSurfacePresentModesKHR(input_device, surface.surface_khr, &presentModeCount,
+                                                details.present_modes.data());
     }
 
     return details;
@@ -1141,8 +1099,8 @@ class SmVulkanRendererSystem {
 
     uint32_t imageIndex;
     VkResult acquireImageResult =
-        vkAcquireNextImageKHR(devices.logical_device, swap_chain.swap_chain, UINT64_MAX, imageAvailableSemaphores[currentFrame],
-                              VK_NULL_HANDLE, &imageIndex);
+        vkAcquireNextImageKHR(devices.logical_device, swap_chain.swap_chain, UINT64_MAX,
+                              imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
     if (VK_ERROR_OUT_OF_DATE_KHR == acquireImageResult) {
       recreateSwapChain();
       return;
@@ -1150,7 +1108,8 @@ class SmVulkanRendererSystem {
       throw std::runtime_error("Failed to acquired swap chain image");
     }
 
-    vkResetFences(devices.logical_device, 1, &inFlightFences[currentFrame]);  // Only reset the fence if we are submitting work
+    vkResetFences(devices.logical_device, 1,
+                  &inFlightFences[currentFrame]);  // Only reset the fence if we are submitting work
 
     vkResetCommandBuffer(command_pool.command_buffers[currentFrame], 0);
     recordCommandBuffer(command_pool.command_buffers[currentFrame], imageIndex);
@@ -1230,8 +1189,8 @@ class SmVulkanRendererSystem {
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
     vkCmdBindIndexBuffer(commandBuffer, scene_model_resources.index_buffer, 0, VK_INDEX_TYPE_UINT32);
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline.pipeline_layout, 0, 1, descriptor_pool.descriptor_sets.data(),
-                            0, nullptr);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline.pipeline_layout, 0, 1,
+                            descriptor_pool.descriptor_sets.data(), 0, nullptr);
     vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(scene_model_resources.indices.size()), 1, 0, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
@@ -1256,13 +1215,15 @@ class SmVulkanRendererSystem {
     SmUniformBufferObject ubo{};
     ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(20.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(
-        glm::radians(45.0f), swap_chain.swap_chain_extent.width / (float) swap_chain.swap_chain_extent.height, 0.1f, 10.0f);
+    ubo.proj =
+        glm::perspective(glm::radians(45.0f),
+                         swap_chain.swap_chain_extent.width / (float) swap_chain.swap_chain_extent.height, 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
 
     // Bug reason is:
     void* data;
-    vkMapMemory(devices.logical_device, uniform_buffers.uniform_buffers_memory.at(currentImage), 0, (VkDeviceSize) sizeof(ubo), 0, &data);
+    vkMapMemory(devices.logical_device, uniform_buffers.uniform_buffers_memory.at(currentImage), 0,
+                (VkDeviceSize) sizeof(ubo), 0, &data);
     memcpy(data, &ubo, sizeof(ubo));
     vkUnmapMemory(devices.logical_device, uniform_buffers.uniform_buffers_memory.at(currentImage));
   }
