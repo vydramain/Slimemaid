@@ -2,7 +2,21 @@
 ------------------------------------
   Slimemaid Source Code (07.06.2022)
   This file is part of Slimemaid Source Code.
+  The Vulkan API is designed around the idea of minimal driver overhead and one of the manifestations of that
+  goal is that there is very limited error checking in the API by default. Even mistakes as simple
+  as setting enumerations to incorrect values or passing null pointers to required parameters
+  are generally not explicitly handled and will simply result in crashes or undefined behavior.
 
+  For checks this all Vulkan has validation layers. Validation layers is Vulkan system there are
+  optional components that hook into Vulkan function calls to apply additional operations.
+  Common operations in validation layers are:
+    - Checking the values of parameters against the specification to detect misuse
+    - Tracking creation and destruction of objects to find resource leaks
+    - Checking thread safety by tracking the threads that calls originate from
+    - Logging every call and its parameters to the standard output
+    - Tracing Vulkan calls for profiling and replaying
+
+  Debug system initialize validation layers and setup debug messenger for them.
 ------------------------------------
 */
 
@@ -91,12 +105,12 @@ void setup_debug_messenger(bool input_enable_validation_layers,
   std::cout << "Enable validation layers flag is: " << enable_validation_layers << std::endl;
   if (!input_enable_validation_layers) return;
 
-  VkDebugUtilsMessengerCreateInfoEXT createInfo;
-  fill_debug_messenger_create_info_EXT(createInfo);
+  VkDebugUtilsMessengerCreateInfoEXT create_info;
+  fill_debug_messenger_create_info_EXT(create_info);
 
   if (VK_SUCCESS != create_debug_utils_messenger_EXT(
                         input_instance.instance,
-                        &createInfo,
+                        &create_info,
                         nullptr,
                         p_debug_messenger)) {
     throw std::runtime_error("Failed to set up debug messenger");
