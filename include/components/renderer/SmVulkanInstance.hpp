@@ -7,13 +7,13 @@
 ------------------------------------
 */
 
-#ifndef SLIMEMAID_SMINSTANCE_HPP
-#define SLIMEMAID_SMINSTANCE_HPP
+#ifndef SLIMEMAID_SMVULKANINSTANCE_HPP
+#define SLIMEMAID_SMVULKANINSTANCE_HPP
 
 #include <vulkan/vulkan.h>
 
-struct SmInstance {
+struct SmVulkanInstance {
   VkInstance instance;
 };
 
-#endif  // SLIMEMAID_SMINSTANCE_HPP
+#endif  // SLIMEMAID_SMVULKANINSTANCE_HPP

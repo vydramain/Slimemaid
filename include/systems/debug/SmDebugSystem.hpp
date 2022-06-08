@@ -9,7 +9,24 @@
 #ifndef SLIMEMAID_SMDEBUGSYSTEM_H
 #define SLIMEMAID_SMDEBUGSYSTEM_H
 
+#ifdef NDEBUG
+const bool enable_validation_layers = false;
+#else
+const bool enable_validation_layers = true;
+#endif
+
 #include <vulkan/vulkan.h>
+
+const std::vector<const char*> validation_layers = { "VK_LAYER_KHRONOS_validation" };
+
+static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                                                    VkDebugUtilsMessageTypeFlagsEXT messageType,
+                                                    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                                                    void* pUserData) {
+  std::cerr << pCallbackData->pMessage << '\n';
+
+  return VK_FALSE;
+}
 
 VkResult create_debug_utils_messenger_EXT(VkInstance input_instance,
                                       const VkDebugUtilsMessengerCreateInfoEXT* p_create_info,
@@ -30,6 +47,62 @@ void destroy_debug_utils_messenger_EXT(VkInstance input_instance,
   if (nullptr != func) {
     func(input_instance, input_debug_messenger, p_allocator);
   }
+}
+
+bool check_validation_layer_support() {
+  uint32_t layer_count;
+  vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
+
+  std::vector<VkLayerProperties> available_layers(layer_count);
+  vkEnumerateInstanceLayerProperties(&layer_count, available_layers.data());
+
+  for (const char* layerName : validation_layers) {
+    bool layerFound = false;
+    for (const auto& layerProperties : available_layers) {
+      if (0 == strcmp(layerName, layerProperties.layerName)) {
+        layerFound = true;
+        break;
+      }
+    }
+    if (!layerFound) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void fill_debug_messenger_create_info_EXT(VkDebugUtilsMessengerCreateInfoEXT& create_info) {
+  create_info = {};
+  create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+  create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                               VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                               VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+  create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+  create_info.pfnUserCallback = debug_callback;
+  create_info.pUserData = nullptr;  // Optional
+}
+
+void setup_debug_messenger(bool input_enable_validation_layers,
+                           SmVulkanInstance input_instance,
+                           VkDebugUtilsMessengerEXT* p_debug_messenger) {
+  std::cout << "Enable validation layers flag is: " << enable_validation_layers << std::endl;
+  if (!input_enable_validation_layers) return;
+
+  VkDebugUtilsMessengerCreateInfoEXT createInfo;
+  fill_debug_messenger_create_info_EXT(createInfo);
+
+  if (VK_SUCCESS != create_debug_utils_messenger_EXT(
+                        input_instance.instance,
+                        &createInfo,
+                        nullptr,
+                        p_debug_messenger)) {
+    throw std::runtime_error("Failed to set up debug messenger");
+  }
+
+  std::cout << "Debug messenger setup process ends with success..." << std::endl;
 }
 
 #endif  // SLIMEMAID_SMDEBUGSYSTEM_H
