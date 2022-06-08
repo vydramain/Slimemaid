@@ -15,9 +15,8 @@
 #include <stdexcept>
 
 #include "components/renderer/SmVulkanInstance.hpp"
-
 #include "systems/debug/SmDebugSystem.hpp"
-#include "systems/renderer/GLFWWindowSystem.hpp"
+#include "systems/renderer/SmGLFWWindowSystem.hpp"
 
 void createInstance(SmVulkanInstance& p_instance,
                     const bool input_enable_validation_layers) {

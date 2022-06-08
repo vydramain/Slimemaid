@@ -7,8 +7,8 @@
 ------------------------------------
 */
 
-#ifndef SLIMEMAID_GLFWWINDOWSYSTEM_HPP
-#define SLIMEMAID_GLFWWINDOWSYSTEM_HPP
+#ifndef SLIMEMAID_SMGLFWWINDOWSYSTEM_HPP
+#define SLIMEMAID_SMGLFWWINDOWSYSTEM_HPP
 
 #include <vulkan/vulkan.h>
 
@@ -45,4 +45,4 @@ void createSurface(SmGLFWWindow input_window,
   std::cout << "GLFW window surface_khr creation process ends with success..." << std::endl;
 }
 
-#endif  // SLIMEMAID_GLFWWINDOWSYSTEM_HPP
+#endif  // SLIMEMAID_SMGLFWWINDOWSYSTEM_HPP
