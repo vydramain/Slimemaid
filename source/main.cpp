@@ -58,7 +58,6 @@
 #include "systems/renderer/SmTextureImageViewSamplerSystem.hpp"
 #include "systems/renderer/SmVulkanInstanceSystem.h"
 
-const SmFrame frameParams;
 const std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 const std::string VERTEX_SHADERS_PATH = "./shaders/vert.spv";
@@ -66,6 +65,7 @@ const std::string FRAGMENT_SHADERS_PATH = "./shaders/frag.spv";
 
 class SmVulkanRendererSystem {
  private:
+  SmFrame frameParams;
   SmGLFWWindow window;
   SmSurface surface;
   SmVulkanInstance instance;
@@ -95,10 +95,13 @@ class SmVulkanRendererSystem {
 
   void initWindow() {
     glfwInit();
-
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    window.glfw_window = glfwCreateWindow(frameParams.WIDTH, frameParams.HEIGHT, "Vulkan", nullptr, nullptr);
+    window.glfw_window = glfwCreateWindow((int) frameParams.WIDTH,
+                                          (int) frameParams.HEIGHT,
+                                          "Vulkan",
+                                          nullptr,
+                                          nullptr);
     glfwSetWindowUserPointer(window.glfw_window, this);
     glfwSetFramebufferSizeCallback(window.glfw_window, framebufferResizeCallback);
     std::cout << "GLFW initialization process ends with success..." << std::endl;
@@ -115,7 +118,9 @@ class SmVulkanRendererSystem {
     setup_debug_messenger(enable_validation_layers,
                           instance,
                           &debugMessenger);
-    createSurface();
+    createSurface(window,
+                  instance,
+                  surface);
     pickPhysicalDevice();
     createLogicalDevice();
     createSwapChain();
@@ -256,16 +261,6 @@ class SmVulkanRendererSystem {
     createColorResources();
     createFramebuffers();
     std::cout << "Swap chain recreation process ends with success..." << std::endl;
-  }
-
-
-
-  void createSurface() {
-    if (VK_SUCCESS != glfwCreateWindowSurface(instance.instance, window.glfw_window, nullptr, &surface.surface_khr)) {
-      throw std::runtime_error("Failed to create window surface_khr");
-    }
-
-    std::cout << "GLFW window surface_khr creation process ends with success..." << std::endl;
   }
 
   void pickPhysicalDevice() {

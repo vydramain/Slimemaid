@@ -2,7 +2,8 @@
 ------------------------------------
   Slimemaid Source Code (22.05.2022)
   This file is part of Slimemaid Source Code.
-  GLFW window system provides functions for easy  window initialization, termination, control and reload processes.
+  GLFW window system provides functions for easy window initialization, termination, control and reload processes.
+  GLFW window's surface space is also managed by the system.
 ------------------------------------
 */
 
@@ -29,6 +30,19 @@ std::vector<const char*> getRequiredExtensions(bool input_enable_validation_laye
   }
 
   return extensions;
+}
+
+void createSurface(SmGLFWWindow input_window,
+                   SmVulkanInstance input_instance,
+                   SmSurface& surface) {
+  if (VK_SUCCESS != glfwCreateWindowSurface(input_instance.instance,
+                                            input_window.glfw_window,
+                                            nullptr,
+                                            &surface.surface_khr)) {
+    throw std::runtime_error("Failed to create window surface_khr");
+  }
+
+  std::cout << "GLFW window surface_khr creation process ends with success..." << std::endl;
 }
 
 #endif  // SLIMEMAID_GLFWWINDOWSYSTEM_HPP
