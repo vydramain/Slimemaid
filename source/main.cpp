@@ -56,7 +56,7 @@
 #include "systems/renderer/SmModelLoaderSystem.hpp"
 #include "systems/renderer/SmTextureImageSystem.hpp"
 #include "systems/renderer/SmTextureImageViewSamplerSystem.hpp"
-#include "systems/renderer/SmVulkanInstanceSystem.h"
+#include "systems/renderer/SmVulkanInstanceSystem.hpp"
 
 const std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
@@ -113,14 +113,11 @@ class SmVulkanRendererSystem {
   }
 
   void initVulkan() {
-    createInstance(instance,
-                   enable_validation_layers);
+    create_instance(instance, enable_validation_layers);
     setup_debug_messenger(enable_validation_layers,
                           instance,
                           &debugMessenger);
-    createSurface(window,
-                  instance,
-                  surface);
+    create_surface(window, instance, surface);
     pickPhysicalDevice();
     createLogicalDevice();
     createSwapChain();

@@ -32,7 +32,7 @@ std::vector<const char*> getRequiredExtensions(bool input_enable_validation_laye
   return extensions;
 }
 
-void createSurface(SmGLFWWindow input_window,
+void create_surface(SmGLFWWindow input_window,
                    SmVulkanInstance input_instance,
                    SmSurface& surface) {
   if (VK_SUCCESS != glfwCreateWindowSurface(input_instance.instance,
