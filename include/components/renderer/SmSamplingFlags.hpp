@@ -2,7 +2,7 @@
 ------------------------------------
   Slimemaid Source Code (05.06.2022)
   This file is part of Slimemaid Source Code.
-  Multisample anti-aliasing parameter.
+  Sampling flag set multisample anti-aliasing parameter.
   By default, using only one sample per pixel which is equivalent to no multisampling.
 ------------------------------------
 */

@@ -2,7 +2,7 @@
 ------------------------------------
   Slimemaid Source Code (07.06.2022)
   This file is part of Slimemaid Source Code.
-
+  Vulkan instance system create Vulkan instance. Just create. Deletion should be controlled explicitly.
 ------------------------------------
 */
 
@@ -15,10 +15,11 @@
 #include <stdexcept>
 
 #include "components/renderer/SmVulkanInstance.hpp"
+
 #include "systems/debug/SmDebugSystem.hpp"
 #include "systems/renderer/SmGLFWWindowSystem.hpp"
 
-void create_instance(SmVulkanInstance& p_instance,
+void create_instance(SmVulkanInstance* p_instance,
                     const bool input_enable_validation_layers) {
   if (input_enable_validation_layers && !check_validation_layer_support()) {
     throw std::runtime_error("Validation layers requested, but not avaliable");
@@ -54,7 +55,7 @@ void create_instance(SmVulkanInstance& p_instance,
 
   if (VK_SUCCESS != vkCreateInstance(&instance_create_info,
                                      nullptr,
-                                     &p_instance.instance)) {
+                                     &p_instance->instance)) {
     throw std::runtime_error("Failed to create Vulkan p_instance");
   } else {
     std::cout << "Vulkan p_instance creation process ends with success..." << std::endl;

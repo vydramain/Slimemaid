@@ -3,7 +3,8 @@
   Slimemaid Source Code (22.05.2022)
   This file is part of Slimemaid Source Code.
   GLFW window system provides functions for easy window initialization, termination, control and reload processes.
-  GLFW window's surface space is also managed by the system.
+  Surface is linked with window, so GLFW window system can create surface and set it for window
+  for presentation rendered images.
 ------------------------------------
 */
 
@@ -20,10 +21,10 @@
 #include "systems/debug/SmDebugSystem.hpp"
 
 std::vector<const char*> getRequiredExtensions(bool input_enable_validation_layers) {
-  uint32_t glfwExtensionsCount = 0;
-  const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionsCount);
+  uint32_t glfw_extensions_count = 0;
+  const char** glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extensions_count);
 
-  std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionsCount);
+  std::vector<const char*> extensions(glfw_extensions, glfw_extensions + glfw_extensions_count);
 
   if (input_enable_validation_layers) {
     extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -34,15 +35,20 @@ std::vector<const char*> getRequiredExtensions(bool input_enable_validation_laye
 
 void create_surface(SmGLFWWindow input_window,
                    SmVulkanInstance input_instance,
-                   SmSurface& surface) {
+                   SmSurface* p_surface) {
   if (VK_SUCCESS != glfwCreateWindowSurface(input_instance.instance,
                                             input_window.glfw_window,
                                             nullptr,
-                                            &surface.surface_khr)) {
+                                            &p_surface->surface_khr)) {
     throw std::runtime_error("Failed to create window surface_khr");
   }
 
   std::cout << "GLFW window surface_khr creation process ends with success..." << std::endl;
 }
+
+void get_frame_buffer_size(SmGLFWWindow input_window, int& width, int& height) {
+  glfwGetFramebufferSize(input_window.glfw_window, &width, &height);
+}
+
 
 #endif  // SLIMEMAID_SMGLFWWINDOWSYSTEM_HPP
