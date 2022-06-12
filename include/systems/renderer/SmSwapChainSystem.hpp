@@ -134,9 +134,9 @@ VkExtent2D choose_swap_extent(SmGLFWWindow input_window,
 }
 
 void create_swap_chain(SmDevices input_devices,
-                     SmSurface input_surface,
-                     SmGLFWWindow input_window,
-                     SmSwapChain* swap_chain) {
+                       SmSurface input_surface,
+                       SmGLFWWindow input_window,
+                       SmSwapChain* swap_chain) {
   SmSwapChainSupportDetails swap_chain_support = query_swap_chain_support(input_devices.physical_device,
                                                                           input_surface);
 
