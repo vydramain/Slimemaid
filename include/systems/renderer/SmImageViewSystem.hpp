@@ -5,8 +5,8 @@
 ------------------------------------
 */
 
-#ifndef SLIMEMAID_SMTEXTUREIMAGEVIEWSAMPLERSYSTEM_HPP
-#define SLIMEMAID_SMTEXTUREIMAGEVIEWSAMPLERSYSTEM_HPP
+#ifndef SLIMEMAID_SMIMAGEVIEWSYSTEM_HPP
+#define SLIMEMAID_SMIMAGEVIEWSYSTEM_HPP
 
 #include <vulkan/vulkan.h>
 
@@ -17,7 +17,7 @@
 #include "components/renderer/SmTextureImage.hpp"
 #include "components/renderer/SmTextureImageViewSampler.hpp"
 
-VkImageView createImageView(SmDevices devices,
+VkImageView create_image_view(SmDevices devices,
                             VkImage inputImage,
                             VkFormat inputFormat,
                             VkImageAspectFlags inputAspectMask,
@@ -34,7 +34,10 @@ VkImageView createImageView(SmDevices devices,
   viewInfo.subresourceRange.layerCount = 1;
 
   VkImageView imageView;
-  if (vkCreateImageView(devices.logical_device, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+  if (vkCreateImageView(devices.logical_device,
+                        &viewInfo,
+                        nullptr,
+                        &imageView) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create texture image view");
   }
 
@@ -45,13 +48,10 @@ void createTextureImageView(SmDevices devices,
                             SmTextureImage input_texture_image,
                             SmTextureImageViewSampler& texture_image_view_sampler,
                             uint32_t input_mip_levels) {
-  texture_image_view_sampler.texture_image_view = createImageView(devices,
-                                                                input_texture_image.texture_image,
-                                                                VK_FORMAT_R8G8B8A8_SRGB,
-                                                                VK_IMAGE_ASPECT_COLOR_BIT,
-                                                                input_mip_levels);
+  texture_image_view_sampler.texture_image_view = create_image_view(
+      devices, input_texture_image.texture_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, input_mip_levels);
 
   std::cout << "Filling texture image view process ends with success..." << std::endl;
 }
 
-#endif  // SLIMEMAID_SMTEXTUREIMAGEVIEWSAMPLERSYSTEM_HPP
+#endif  // SLIMEMAID_SMIMAGEVIEWSYSTEM_HPP

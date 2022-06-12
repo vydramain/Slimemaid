@@ -54,9 +54,9 @@
 #include "systems/renderer/SmCommandsSystem.hpp"
 #include "systems/renderer/SmDeviceSystem.hpp"
 #include "systems/renderer/SmGraphicsPipelineSystem.hpp"
+#include "systems/renderer/SmImageViewSystem.hpp"
 #include "systems/renderer/SmModelLoaderSystem.hpp"
 #include "systems/renderer/SmTextureImageSystem.hpp"
-#include "systems/renderer/SmTextureImageViewSamplerSystem.hpp"
 #include "systems/renderer/SmVulkanInstanceSystem.hpp"
 
 const std::string VERTEX_SHADERS_PATH = "./shaders/vert.spv";
@@ -132,7 +132,7 @@ class SmVulkanRendererSystem {
                       surface,
                       window,
                       &swap_chain);
-    createImageViews();
+    create_image_views(devices, &swap_chain);
     createRenderPass();
     createDescriptorSetLayout();
     createGraphicsPipeline(VERTEX_SHADERS_PATH,
@@ -187,34 +187,12 @@ class SmVulkanRendererSystem {
     std::cout << "Main loop function stoped..." << std::endl;
   }
 
-  void cleanUpSwapChain() {
-    vkDestroyImageView(devices.logical_device, color_image.color_image_view, nullptr);
-    vkDestroyImage(devices.logical_device, color_image.color_image, nullptr);
-    vkFreeMemory(devices.logical_device, color_image.color_image_memory, nullptr);
-
-    vkDestroyImageView(devices.logical_device, depth_buffers.depth_image_view, nullptr);  // dif
-    vkDestroyImage(devices.logical_device, depth_buffers.depth_image, nullptr);           // dif
-    vkFreeMemory(devices.logical_device, depth_buffers.depth_image_memory, nullptr);      // dif
-
-    for (auto framebuffer : swap_chain.swap_chain_frame_buffers) {
-      vkDestroyFramebuffer(devices.logical_device, framebuffer, nullptr);
-    }
-
-    vkDestroyPipeline(devices.logical_device, graphics_pipeline.pipeline, nullptr);
-    vkDestroyPipelineLayout(devices.logical_device, graphics_pipeline.pipeline_layout, nullptr);
-    vkDestroyRenderPass(devices.logical_device, graphics_pipeline.render_pass, nullptr);
-
-    for (auto imageView : swap_chain.swap_chain_image_views) {
-      vkDestroyImageView(devices.logical_device, imageView, nullptr);
-    }
-
-    vkDestroySwapchainKHR(devices.logical_device, swap_chain.swap_chain, nullptr);
-
-    std::cout << "Swap chain clean up process ends with success..." << std::endl;
-  }
-
   void cleanUp() {
-    cleanUpSwapChain();
+    clean_up_swap_chain(devices,
+                        color_image,
+                        depth_buffers,
+                        graphics_pipeline,
+                        &swap_chain);
 
     vkDestroySampler(devices.logical_device, texture_model_resources_read_handler.texture_sampler, nullptr);
     vkDestroyImageView(devices.logical_device, texture_model_resources_read_handler.texture_image_view, nullptr);
@@ -264,13 +242,17 @@ class SmVulkanRendererSystem {
 
     vkDeviceWaitIdle(devices.logical_device);
 
-    cleanUpSwapChain();
+    clean_up_swap_chain(devices,
+                        color_image,
+                        depth_buffers,
+                        graphics_pipeline,
+                        &swap_chain);
 
     create_swap_chain(devices,
                       surface,
                       window,
                       &swap_chain);
-    createImageViews();
+    create_image_views(devices, &swap_chain);
     createRenderPass();
     createGraphicsPipeline(VERTEX_SHADERS_PATH,
                            FRAGMENT_SHADERS_PATH,
@@ -283,17 +265,6 @@ class SmVulkanRendererSystem {
     createColorResources();
     createFramebuffers();
     std::cout << "Swap chain recreation process ends with success..." << std::endl;
-  }
-
-  void createImageViews() {
-    swap_chain.swap_chain_image_views.resize(swap_chain.swap_chain_images.size());
-
-    for (uint32_t i = 0; i < swap_chain.swap_chain_images.size(); i++) {
-      swap_chain.swap_chain_image_views[i] = createImageView(
-          devices, swap_chain.swap_chain_images[i], swap_chain.swap_chain_image_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
-    }
-
-    std::cout << "Image view creation process ends with success..." << std::endl;
   }
 
   void createRenderPass() {
@@ -349,13 +320,13 @@ class SmVulkanRendererSystem {
     VkSubpassDependency subpassDependency{};
     subpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
     subpassDependency.dstSubpass = 0;
-    subpassDependency.srcStageMask =
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    subpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+                                     VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     subpassDependency.srcAccessMask = 0;
-    subpassDependency.dstStageMask =
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    subpassDependency.dstAccessMask =
-        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    subpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+                                     VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    subpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+                                      VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
     std::array<VkAttachmentDescription, 3> attachments = {colorAttachmentDescription, depthAttachmentDescription,
                                                           colorAttachmentResolveDescription};
@@ -370,7 +341,10 @@ class SmVulkanRendererSystem {
     renderPassCreateInfo.pDependencies = &subpassDependency;
 
     if (VK_SUCCESS !=
-        vkCreateRenderPass(devices.logical_device, &renderPassCreateInfo, nullptr, &graphics_pipeline.render_pass)) {
+        vkCreateRenderPass(devices.logical_device,
+                           &renderPassCreateInfo,
+                           nullptr,
+                           &graphics_pipeline.render_pass)) {
       throw std::runtime_error("Failed to create render pass");
     }
 
@@ -424,7 +398,9 @@ class SmVulkanRendererSystem {
       framebufferCreateInfo.height = swap_chain.swap_chain_extent.height;
       framebufferCreateInfo.layers = 1;
 
-      if (VK_SUCCESS != vkCreateFramebuffer(devices.logical_device, &framebufferCreateInfo, nullptr,
+      if (VK_SUCCESS != vkCreateFramebuffer(devices.logical_device,
+                                            &framebufferCreateInfo,
+                                            nullptr,
                                             &swap_chain.swap_chain_frame_buffers[i])) {
         throw std::runtime_error("Failed to create framebuffer");
       }
@@ -443,7 +419,10 @@ class SmVulkanRendererSystem {
     commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndices.graphics_family.value();
 
     if (VK_SUCCESS !=
-        vkCreateCommandPool(devices.logical_device, &commandPoolCreateInfo, nullptr, &command_pool.command_pool)) {
+        vkCreateCommandPool(devices.logical_device,
+                            &commandPoolCreateInfo,
+                            nullptr,
+                            &command_pool.command_pool)) {
       throw std::runtime_error("Failed to create command pool");
     }
 
@@ -458,7 +437,7 @@ class SmVulkanRendererSystem {
                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depth_buffers.depth_image, depth_buffers.depth_image_memory,
                  devices);
     depth_buffers.depth_image_view =
-        createImageView(devices, depth_buffers.depth_image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+        create_image_view(devices, depth_buffers.depth_image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
     transition_image_layout(devices, command_pool.command_pool, queues.graphics_queue, depth_buffers.depth_image,
                             depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                             1);
@@ -496,7 +475,7 @@ class SmVulkanRendererSystem {
                  VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, color_image.color_image, color_image.color_image_memory, devices);
     color_image.color_image_view =
-        createImageView(devices, color_image.color_image, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+        create_image_view(devices, color_image.color_image, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
   }
 
   void createTextureSampler() {
@@ -701,12 +680,20 @@ class SmVulkanRendererSystem {
     // Create the fence in the signaled state, so that the first call to vkWaitForFences() returns immediately since
     // the fence is already signaled. This builted into the API.
     // This behavior reached by flag = VK_FENCE_CREATE_SIGNALED_BIT.
-    vkWaitForFences(devices.logical_device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    vkWaitForFences(devices.logical_device,
+                    1,
+                    &inFlightFences[currentFrame],
+                    VK_TRUE,
+                    UINT64_MAX);
 
     uint32_t imageIndex;
     VkResult acquireImageResult =
-        vkAcquireNextImageKHR(devices.logical_device, swap_chain.swap_chain, UINT64_MAX,
-                              imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+        vkAcquireNextImageKHR(devices.logical_device,
+                              swap_chain.swap_chain,
+                              UINT64_MAX,
+                              imageAvailableSemaphores[currentFrame],
+                              VK_NULL_HANDLE,
+                              &imageIndex);
     if (VK_ERROR_OUT_OF_DATE_KHR == acquireImageResult) {
       recreateSwapChain();
       return;
@@ -714,7 +701,8 @@ class SmVulkanRendererSystem {
       throw std::runtime_error("Failed to acquired swap chain image");
     }
 
-    vkResetFences(devices.logical_device, 1,
+    vkResetFences(devices.logical_device,
+                  1,
                   &inFlightFences[currentFrame]);  // Only reset the fence if we are submitting work
 
     vkResetCommandBuffer(command_pool.command_buffers[currentFrame], 0);
@@ -736,7 +724,10 @@ class SmVulkanRendererSystem {
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    if (VK_SUCCESS != vkQueueSubmit(queues.graphics_queue, 1, &submitInfo, inFlightFences[currentFrame])) {
+    if (VK_SUCCESS != vkQueueSubmit(queues.graphics_queue,
+                                    1,
+                                    &submitInfo,
+                                    inFlightFences[currentFrame])) {
       throw std::runtime_error("Failed to submit draw command buffer");
     }
 
@@ -753,7 +744,8 @@ class SmVulkanRendererSystem {
     presentInfo.pImageIndices = &imageIndex;
 
     VkResult queuePresentResult = vkQueuePresentKHR(queues.present_queue, &presentInfo);
-    if (VK_ERROR_OUT_OF_DATE_KHR == queuePresentResult || VK_SUBOPTIMAL_KHR == queuePresentResult ||
+    if (VK_ERROR_OUT_OF_DATE_KHR == queuePresentResult ||
+        VK_SUBOPTIMAL_KHR == queuePresentResult ||
         framebufferResized) {
       framebufferResized = false;
       recreateSwapChain();
@@ -795,21 +787,31 @@ class SmVulkanRendererSystem {
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
     vkCmdBindIndexBuffer(commandBuffer, scene_model_resources.index_buffer, 0, VK_INDEX_TYPE_UINT32);
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline.pipeline_layout, 0, 1,
-                            descriptor_pool.descriptor_sets.data(), 0, nullptr);
-    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(scene_model_resources.indices.size()), 1, 0, 0, 0);
+    vkCmdBindDescriptorSets(commandBuffer,
+                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            graphics_pipeline.pipeline_layout,
+                            0,
+                            1,
+                            descriptor_pool.descriptor_sets.data(),
+                            0,
+                            nullptr);
+    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(scene_model_resources.indices.size()),
+                     1,
+                     0,
+                     0,
+                     0);
 
     vkCmdEndRenderPass(commandBuffer);
+
+    if (VK_SUCCESS != vkEndCommandBuffer(commandBuffer)) {
+      throw std::runtime_error("Failed to record command buffer");
+    }
 
     // Documentation's description for vkCmdDraw function. Parameters:
     // vertexCount - Even though we don't have a vertex buffer, we technically still have 3
     // scene_model_resources.vertices to draw. instanceCount - Used for instanced rendering, use 1 if you're not doing
     // that. firstVertex - Used as an offset into the vertex buffer, defines the lowest value of gl_VertexIndex.
     // firstInstance - Used as an offset for instanced rendering, defines the lowest value of gl_InstanceIndex.
-
-    if (VK_SUCCESS != vkEndCommandBuffer(commandBuffer)) {
-      throw std::runtime_error("Failed to record command buffer");
-    }
   }
 
   void updateUniformBuffer(uint32_t currentImage) {
@@ -819,11 +821,17 @@ class SmVulkanRendererSystem {
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
     SmUniformBufferObject ubo{};
-    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(20.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.model = glm::rotate(glm::mat4(1.0f),
+                            time * glm::radians(20.0f),
+                            glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f),
+                           glm::vec3(0.0f, 0.0f, 0.0f),
+                           glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.proj =
         glm::perspective(glm::radians(45.0f),
-                         swap_chain.swap_chain_extent.width / (float) swap_chain.swap_chain_extent.height, 0.1f, 10.0f);
+                         swap_chain.swap_chain_extent.width / (float) swap_chain.swap_chain_extent.height,
+                         0.1f,
+                         10.0f);
     ubo.proj[1][1] *= -1;
 
     // Bug reason is:

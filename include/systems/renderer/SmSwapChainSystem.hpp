@@ -19,8 +19,40 @@
 #include "components/renderer/SmSwapChain.hpp"
 #include "components/renderer/SmSwapChainSupportDetails.hpp"
 
+#include "systems/renderer/SmImageViewSystem.hpp"
 #include "systems/renderer/SmGLFWWindowSystem.hpp"
 #include "systems/renderer/SmQueueFamiliesSystem.hpp"
+#include "systems/renderer/SmGraphicsPipelineSystem.hpp"
+
+void clean_up_swap_chain(SmDevices input_devices,
+                         SmColorImage input_color_image,
+                         SmDepthBuffers input_depth_buffers,
+                         SmGraphicsPipeline input_graphics_pipeline,
+                         SmSwapChain* p_swap_chain) {
+  vkDestroyImageView(input_devices.logical_device, input_color_image.color_image_view, nullptr);
+  vkDestroyImage(input_devices.logical_device, input_color_image.color_image, nullptr);
+  vkFreeMemory(input_devices.logical_device, input_color_image.color_image_memory, nullptr);
+
+  vkDestroyImageView(input_devices.logical_device, input_depth_buffers.depth_image_view, nullptr);  // dif
+  vkDestroyImage(input_devices.logical_device, input_depth_buffers.depth_image, nullptr);           // dif
+  vkFreeMemory(input_devices.logical_device, input_depth_buffers.depth_image_memory, nullptr);      // dif
+
+  for (auto framebuffer : p_swap_chain->swap_chain_frame_buffers) {
+    vkDestroyFramebuffer(input_devices.logical_device, framebuffer, nullptr);
+  }
+
+  vkDestroyPipeline(input_devices.logical_device, input_graphics_pipeline.pipeline, nullptr);
+  vkDestroyPipelineLayout(input_devices.logical_device, input_graphics_pipeline.pipeline_layout, nullptr);
+  vkDestroyRenderPass(input_devices.logical_device, input_graphics_pipeline.render_pass, nullptr);
+
+  for (auto imageView : p_swap_chain->swap_chain_image_views) {
+    vkDestroyImageView(input_devices.logical_device, imageView, nullptr);
+  }
+
+  vkDestroySwapchainKHR(input_devices.logical_device, p_swap_chain->swap_chain, nullptr);
+
+  std::cout << "Swap chain clean up process ends with success..." << std::endl;
+}
 
 SmSwapChainSupportDetails query_swap_chain_support(VkPhysicalDevice input_device,
                                                    SmSurface input_surface) {
@@ -168,6 +200,21 @@ void create_swap_chain(SmDevices input_devices,
   swap_chain->swap_chain_extent = tmp_swap_chain_extent;
 
   std::cout << "Swap chain creation process ends with success..." << std::endl;
+}
+
+void create_image_views(SmDevices input_devices,
+                        SmSwapChain* p_swap_chain) {
+  p_swap_chain->swap_chain_image_views.resize(p_swap_chain->swap_chain_images.size());
+
+  for (uint32_t i = 0; i < p_swap_chain->swap_chain_images.size(); i++) {
+    p_swap_chain->swap_chain_image_views[i] = create_image_view(input_devices,
+                                                                p_swap_chain->swap_chain_images[i],
+                                                                p_swap_chain->swap_chain_image_format,
+                                                                VK_IMAGE_ASPECT_COLOR_BIT,
+                                                                1);
+  }
+
+  std::cout << "Image view creation process ends with success..." << std::endl;
 }
 
 #endif  // SLIMEMAID_SMSWAPCHAINSYSTEM_H
