@@ -53,6 +53,7 @@
 #include "systems/renderer/SmBuffersSystem.hpp"
 #include "systems/renderer/SmCommandsSystem.hpp"
 #include "systems/renderer/SmDepthBuffersSystem.hpp"
+#include "systems/renderer/SmDescriptorsSystem.hpp"
 #include "systems/renderer/SmDeviceSystem.hpp"
 #include "systems/renderer/SmGraphicsPipelineSystem.hpp"
 #include "systems/renderer/SmImageViewSystem.hpp"
@@ -138,7 +139,8 @@ class SmVulkanRendererSystem {
                        msaa_samples,
                        &graphics_pipeline,
                        &swap_chain);
-    createDescriptorSetLayout();
+    createDescriptorSetLayout(devices,
+                              &descriptor_pool);
     createGraphicsPipeline(VERTEX_SHADERS_PATH,
                            FRAGMENT_SHADERS_PATH,
                            devices,
@@ -272,35 +274,6 @@ class SmVulkanRendererSystem {
     createColorResources();
     createFramebuffers();
     std::cout << "Swap chain recreation process ends with success..." << std::endl;
-  }
-
-  void createDescriptorSetLayout() {
-    VkDescriptorSetLayoutBinding uboLayoutBinding{};
-    uboLayoutBinding.binding = 0;
-    uboLayoutBinding.descriptorCount = 1;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uboLayoutBinding.pImmutableSamplers = nullptr;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-    VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-    samplerLayoutBinding.binding = 1;
-    samplerLayoutBinding.descriptorCount = 1;
-    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    samplerLayoutBinding.pImmutableSamplers = nullptr;
-    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-    std::array<VkDescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
-    VkDescriptorSetLayoutCreateInfo layoutInfo{};
-    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-    layoutInfo.pBindings = bindings.data();
-
-    if (VK_SUCCESS != vkCreateDescriptorSetLayout(devices.logical_device, &layoutInfo, nullptr,
-                                                  &descriptor_pool.descriptor_set_layout)) {
-      throw std::runtime_error("Failed to create descriptor set layout");
-    }
-
-    std::cout << "Set layout process description creation ends with success..." << std::endl;
   }
 
   void createFramebuffers() {
