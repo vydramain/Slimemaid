@@ -134,7 +134,8 @@ class SmVulkanRendererSystem {
                       surface,
                       window,
                       &swap_chain);
-    create_image_views(devices, &swap_chain);
+    create_image_views(devices,
+                       &swap_chain);
     create_render_pass(devices,
                        msaa_samples,
                        &graphics_pipeline,
@@ -151,9 +152,14 @@ class SmVulkanRendererSystem {
     create_command_pool(devices,
                         surface,
                         &command_pool);
-    createDepthResources();
+    createDepthResources(devices,
+                         queues,
+                         msaa_samples,
+                         &swap_chain,
+                         &command_pool,
+                         &depth_buffers);
     createColorResources();
-    createFramebuffers();
+    createFrameBuffers();
     create_texture_image(devices,
                          command_pool.command_pool,
                          queues.graphics_queue,
@@ -274,13 +280,18 @@ class SmVulkanRendererSystem {
                            descriptor_pool,
                            graphics_pipeline,
                            msaa_samples.msaa_samples);
-    createDepthResources();
+    createDepthResources(devices,
+                         queues,
+                         msaa_samples,
+                         &swap_chain,
+                         &command_pool,
+                         &depth_buffers);
     createColorResources();
-    createFramebuffers();
+    createFrameBuffers();
     std::cout << "Swap chain recreation process ends with success..." << std::endl;
   }
 
-  void createFramebuffers() {
+  void createFrameBuffers() {
     swap_chain.swap_chain_frame_buffers.resize(swap_chain.swap_chain_image_views.size());
     for (size_t i = 0; i < swap_chain.swap_chain_image_views.size(); i++) {
       std::array<VkImageView, 3> attachments = {
@@ -306,38 +317,7 @@ class SmVulkanRendererSystem {
       }
     }
 
-    std::cout << "Framebuffers creation and implementation processs ends with success..." << std::endl;
-  }
-
-  void createDepthResources() {
-    VkFormat depthFormat = find_depth_format(devices);
-
-    create_image(swap_chain.swap_chain_extent.width,
-                 swap_chain.swap_chain_extent.height,
-                 1,
-                 msaa_samples.msaa_samples,
-                 depthFormat,
-                 VK_IMAGE_TILING_OPTIMAL,
-                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                 depth_buffers.depth_image,
-                 depth_buffers.depth_image_memory,
-                 devices);
-    depth_buffers.depth_image_view = create_image_view(devices,
-                                                       depth_buffers.depth_image,
-                                                       depthFormat,
-                                                       VK_IMAGE_ASPECT_DEPTH_BIT,
-                                                       1);
-    transition_image_layout(devices,
-                            command_pool.command_pool,
-                            queues.graphics_queue,
-                            depth_buffers.depth_image,
-                            depthFormat,
-                            VK_IMAGE_LAYOUT_UNDEFINED,
-                            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                            1);
-
-    std::cout << "Depth resources creation process ends with success..." << std::endl;
+    std::cout << "Frame buffers creation and implementation processs ends with success..." << std::endl;
   }
 
   void createColorResources() {

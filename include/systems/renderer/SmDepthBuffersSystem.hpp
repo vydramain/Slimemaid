@@ -11,6 +11,9 @@
 
 #include <vulkan/vulkan.h>
 
+#include "systems/renderer/SmImageViewSystem.hpp"
+#include "systems/renderer/SmTextureImageSystem.hpp"
+
 VkFormat find_supported_depth_format(SmDevices input_devices,
                                      const std::vector<VkFormat>& candidates,
                                      VkImageTiling input_tiling,
@@ -36,6 +39,43 @@ VkFormat find_depth_format(SmDevices input_devices) {
   return find_supported_depth_format(input_devices,
                                      {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
                                      VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+}
+
+void createDepthResources(SmDevices input_devices,
+                          SmQueues input_queues,
+                          SmSamplingFlags input_msaa_samples,
+                          SmSwapChain* p_swap_chain,
+                          SmCommandPool* p_command_pool,
+                          SmDepthBuffers* p_depth_buffers) {
+  VkFormat depthFormat = find_depth_format(input_devices);
+
+  create_image(p_swap_chain->swap_chain_extent.width,
+               p_swap_chain->swap_chain_extent.height,
+               1,
+               input_msaa_samples.msaa_samples,
+               depthFormat,
+               VK_IMAGE_TILING_OPTIMAL,
+               VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+               p_depth_buffers->depth_image,
+               p_depth_buffers->depth_image_memory,
+               input_devices);
+
+  p_depth_buffers->depth_image_view = create_image_view(input_devices,
+                                                     p_depth_buffers->depth_image,
+                                                     depthFormat,
+                                                     VK_IMAGE_ASPECT_DEPTH_BIT,
+                                                     1);
+  transition_image_layout(input_devices,
+                          p_command_pool->command_pool,
+                          input_queues.graphics_queue,
+                          p_depth_buffers->depth_image,
+                          depthFormat,
+                          VK_IMAGE_LAYOUT_UNDEFINED,
+                          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                          1);
+
+  std::cout << "Depth resources creation process ends with success..." << std::endl;
 }
 
 #endif  // SLIMEMAID_SMDEPTHBUFFERSSYSTEM_HPP

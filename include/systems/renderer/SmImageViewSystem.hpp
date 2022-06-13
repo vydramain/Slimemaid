@@ -17,6 +17,7 @@
 #include "components/renderer/SmDevices.hpp"
 #include "components/renderer/SmTextureImage.hpp"
 #include "components/renderer/SmTextureImageViewSampler.hpp"
+#include "systems/renderer/SmModelLoaderSystem.hpp"
 
 VkImageView create_image_view(SmDevices devices,
                             VkImage input_image,
