@@ -49,7 +49,8 @@ void createDepthResources(SmDevices input_devices,
                           SmDepthBuffers* p_depth_buffers) {
   VkFormat depthFormat = find_depth_format(input_devices);
 
-  create_image(p_swap_chain->swap_chain_extent.width,
+  create_image(input_devices,
+               p_swap_chain->swap_chain_extent.width,
                p_swap_chain->swap_chain_extent.height,
                1,
                input_msaa_samples.msaa_samples,
@@ -58,8 +59,7 @@ void createDepthResources(SmDevices input_devices,
                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                p_depth_buffers->depth_image,
-               p_depth_buffers->depth_image_memory,
-               input_devices);
+               p_depth_buffers->depth_image_memory);
 
   p_depth_buffers->depth_image_view = create_image_view(input_devices,
                                                      p_depth_buffers->depth_image,

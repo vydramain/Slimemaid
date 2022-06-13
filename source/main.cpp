@@ -55,6 +55,7 @@
 #include "systems/renderer/SmDepthBuffersSystem.hpp"
 #include "systems/renderer/SmDescriptorsSystem.hpp"
 #include "systems/renderer/SmDeviceSystem.hpp"
+#include "systems/renderer/SmFrameBufferSystem.hpp"
 #include "systems/renderer/SmGraphicsPipelineSystem.hpp"
 #include "systems/renderer/SmImageViewSystem.hpp"
 #include "systems/renderer/SmModelLoaderSystem.hpp"
@@ -158,8 +159,15 @@ class SmVulkanRendererSystem {
                          &swap_chain,
                          &command_pool,
                          &depth_buffers);
-    createColorResources();
-    createFrameBuffers();
+    createColorResources(devices,
+                         swap_chain,
+                         msaa_samples,
+                         &color_image);
+    create_frame_buffers(devices,
+                         graphics_pipeline,
+                         color_image,
+                         depth_buffers,
+                         &swap_chain);
     create_texture_image(devices,
                          command_pool.command_pool,
                          queues.graphics_queue,
@@ -286,49 +294,16 @@ class SmVulkanRendererSystem {
                          &swap_chain,
                          &command_pool,
                          &depth_buffers);
-    createColorResources();
-    createFrameBuffers();
+    createColorResources(devices,
+                         swap_chain,
+                         msaa_samples,
+                         &color_image);
+      create_frame_buffers(devices,
+                           graphics_pipeline,
+                           color_image,
+                           depth_buffers,
+                           &swap_chain);
     std::cout << "Swap chain recreation process ends with success..." << std::endl;
-  }
-
-  void createFrameBuffers() {
-    swap_chain.swap_chain_frame_buffers.resize(swap_chain.swap_chain_image_views.size());
-    for (size_t i = 0; i < swap_chain.swap_chain_image_views.size(); i++) {
-      std::array<VkImageView, 3> attachments = {
-          color_image.color_image_view,
-          depth_buffers.depth_image_view,
-          swap_chain.swap_chain_image_views[i],
-      };
-
-      VkFramebufferCreateInfo framebufferCreateInfo{};
-      framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-      framebufferCreateInfo.renderPass = graphics_pipeline.render_pass;
-      framebufferCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-      framebufferCreateInfo.pAttachments = attachments.data();
-      framebufferCreateInfo.width = swap_chain.swap_chain_extent.width;
-      framebufferCreateInfo.height = swap_chain.swap_chain_extent.height;
-      framebufferCreateInfo.layers = 1;
-
-      if (VK_SUCCESS != vkCreateFramebuffer(devices.logical_device,
-                                            &framebufferCreateInfo,
-                                            nullptr,
-                                            &swap_chain.swap_chain_frame_buffers[i])) {
-        throw std::runtime_error("Failed to create framebuffer");
-      }
-    }
-
-    std::cout << "Frame buffers creation and implementation processs ends with success..." << std::endl;
-  }
-
-  void createColorResources() {
-    VkFormat colorFormat = swap_chain.swap_chain_image_format;
-
-    create_image(swap_chain.swap_chain_extent.width, swap_chain.swap_chain_extent.height, 1, msaa_samples.msaa_samples,
-                 colorFormat, VK_IMAGE_TILING_OPTIMAL,
-                 VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, color_image.color_image, color_image.color_image_memory, devices);
-    color_image.color_image_view =
-        create_image_view(devices, color_image.color_image, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
   }
 
   void createUniformBuffers() {

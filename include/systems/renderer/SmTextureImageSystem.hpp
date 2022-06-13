@@ -141,7 +141,8 @@ void generate_mipmaps(uint32_t input_texture_width,
   end_single_time_commands(devices.logical_device, command_pool, graphics_queue, command_buffer);
 }
 
-void create_image(uint32_t input_width,
+void create_image(SmDevices input_devices,
+                  uint32_t input_width,
                   uint32_t input_height,
                   uint32_t input_mip_levels,
                   VkSampleCountFlagBits input_num_samples,
@@ -150,8 +151,7 @@ void create_image(uint32_t input_width,
                   VkImageUsageFlags input_usage,
                   VkMemoryPropertyFlags input_properties,
                   VkImage& image,
-                  VkDeviceMemory& image_memory,
-                  SmDevices& devices) {
+                  VkDeviceMemory& image_memory) {
   VkImageCreateInfo image_info{};
   image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
   image_info.imageType = VK_IMAGE_TYPE_2D;
@@ -167,26 +167,26 @@ void create_image(uint32_t input_width,
   image_info.samples = input_num_samples;
   image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-  if (vkCreateImage(devices.logical_device, &image_info, nullptr, &image) != VK_SUCCESS) {
+  if (vkCreateImage(input_devices.logical_device, &image_info, nullptr, &image) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create image");
   }
 
   VkMemoryRequirements mem_requirements;
-  vkGetImageMemoryRequirements(devices.logical_device, image, &mem_requirements);
+  vkGetImageMemoryRequirements(input_devices.logical_device, image, &mem_requirements);
 
   VkMemoryAllocateInfo alloc_info{};
   alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   alloc_info.allocationSize = mem_requirements.size;
   alloc_info.memoryTypeIndex =
-      find_memory_type(&devices,
+      find_memory_type(&input_devices,
                        mem_requirements.memoryTypeBits,
                        input_properties);
 
-  if (vkAllocateMemory(devices.logical_device, &alloc_info, nullptr, &image_memory) != VK_SUCCESS) {
+  if (vkAllocateMemory(input_devices.logical_device, &alloc_info, nullptr, &image_memory) != VK_SUCCESS) {
     throw std::runtime_error("Failed to allocate image memory");
   }
 
-  vkBindImageMemory(devices.logical_device, image, image_memory, 0);
+  vkBindImageMemory(input_devices.logical_device, image, image_memory, 0);
 }
 
 void transition_image_layout(SmDevices& devices,
@@ -308,14 +308,16 @@ void create_texture_image(SmDevices& devices,
 
   stbi_image_free(pixels);
 
-  create_image(texture_width,
+  create_image(devices,
+               texture_width,
                texture_height, mip_levels,
                VK_SAMPLE_COUNT_1_BIT,
                VK_FORMAT_R8G8B8A8_SRGB,
                VK_IMAGE_TILING_OPTIMAL,
                VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-               texture_image, texture_image_memory, devices);
+               texture_image,
+               texture_image_memory);
 
   transition_image_layout(devices, command_pool, graphics_queue,
                           texture_image,
