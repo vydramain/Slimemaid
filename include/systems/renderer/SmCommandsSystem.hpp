@@ -10,40 +10,73 @@
 
 #include <vulkan/vulkan.h>
 
-VkCommandBuffer beginSingleTimeCommands(VkDevice inputDevice, VkCommandPool inputCommandPool) {
-  VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
-  commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  commandBufferAllocateInfo.commandPool = inputCommandPool;
-  commandBufferAllocateInfo.commandBufferCount = 1;
+#include "components/renderer/SmDevices.hpp"
+#include "components/renderer/SmSurface.hpp"
+#include "components/renderer/SmCommandPool.hpp"
+#include "systems/renderer/SmQueueFamiliesSystem.hpp"
 
-  VkCommandBuffer commandBuffer;
-  vkAllocateCommandBuffers(inputDevice, &commandBufferAllocateInfo, &commandBuffer);
+VkCommandBuffer begin_single_time_commands(VkDevice input_device,
+                                           VkCommandPool input_command_pool) {
+  VkCommandBufferAllocateInfo command_buffer_allocate_info{};
+  command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  command_buffer_allocate_info.commandPool = input_command_pool;
+  command_buffer_allocate_info.commandBufferCount = 1;
 
-  VkCommandBufferBeginInfo commandBufferBeginInfo{};
-  commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+  VkCommandBuffer command_buffer;
+  vkAllocateCommandBuffers(input_device,
+                           &command_buffer_allocate_info,
+                           &command_buffer);
 
-  vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
+  VkCommandBufferBeginInfo command_buffer_begin_info{};
+  command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-  return commandBuffer;
+  vkBeginCommandBuffer(command_buffer,
+                       &command_buffer_begin_info);
+
+  return command_buffer;
 }
 
-void endSingleTimeCommands(VkDevice inputDevice,
-                           VkCommandPool inputCommandPool,
-                           VkQueue inputGraphicsQueue,
-                           VkCommandBuffer inputCommandBuffer) {
-  vkEndCommandBuffer(inputCommandBuffer);
+void end_single_time_commands(VkDevice input_device,
+                              VkCommandPool input_command_pool,
+                              VkQueue input_graphics_queue,
+                              VkCommandBuffer input_command_buffer) {
+  vkEndCommandBuffer(input_command_buffer);
 
-  VkSubmitInfo submitInfo{};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &inputCommandBuffer;
+  VkSubmitInfo submit_info{};
+  submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submit_info.commandBufferCount = 1;
+  submit_info.pCommandBuffers = &input_command_buffer;
 
-  vkQueueSubmit(inputGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-  vkQueueWaitIdle(inputGraphicsQueue);
+  vkQueueSubmit(input_graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
+  vkQueueWaitIdle(input_graphics_queue);
 
-  vkFreeCommandBuffers(inputDevice, inputCommandPool, 1, &inputCommandBuffer);
+  vkFreeCommandBuffers(input_device,
+                       input_command_pool,
+                       1,
+                       &input_command_buffer);
+}
+
+void create_command_pool(SmDevices input_devices,
+                       SmSurface input_surface,
+                       SmCommandPool* p_command_pool) {
+  SmQueueFamilyIndices queueFamilyIndices = find_transfer_queue_families(input_devices.physical_device,
+                                                                         input_surface);
+
+  VkCommandPoolCreateInfo commandPoolCreateInfo{};
+  commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndices.graphics_family.value();
+
+  if (VK_SUCCESS != vkCreateCommandPool(input_devices.logical_device,
+                                        &commandPoolCreateInfo,
+                                        nullptr,
+                                        &p_command_pool->command_pool)) {
+    throw std::runtime_error("Failed to create command pool");
+  }
+
+  std::cout << "Command pool creation process ends with success..." << std::endl;
 }
 
 #endif  // SLIMEMAID_SMCOMMANDSSYSTEM_HPP

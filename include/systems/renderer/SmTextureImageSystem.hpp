@@ -40,7 +40,7 @@ void generate_mipmaps(uint32_t input_texture_width,
     throw std::runtime_error("Texture image format does not support linear blitting");
   }
 
-  VkCommandBuffer command_buffer = beginSingleTimeCommands(devices.logical_device, command_pool);
+  VkCommandBuffer command_buffer = begin_single_time_commands(devices.logical_device, command_pool);
 
   VkImageMemoryBarrier barrier{};
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -138,7 +138,7 @@ void generate_mipmaps(uint32_t input_texture_width,
                        1,
                        &barrier);
 
-  endSingleTimeCommands(devices.logical_device, command_pool, graphics_queue, command_buffer);
+  end_single_time_commands(devices.logical_device, command_pool, graphics_queue, command_buffer);
 }
 
 void create_image(uint32_t input_width,
@@ -197,8 +197,7 @@ void transition_image_layout(SmDevices& devices,
                              VkImageLayout input_old_image_layout,
                              VkImageLayout input_new_image_layout,
                              uint32_t input_mip_levels) {
-  VkCommandBuffer command_buffer = beginSingleTimeCommands(devices.logical_device,
-                                                           input_command_pool);
+  VkCommandBuffer command_buffer = begin_single_time_commands(devices.logical_device, input_command_pool);
 
   VkImageMemoryBarrier image_memory_barrier{};
   image_memory_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -261,10 +260,7 @@ void transition_image_layout(SmDevices& devices,
                        1,
                        &image_memory_barrier);
 
-  endSingleTimeCommands(devices.logical_device,
-                        input_command_pool,
-                        input_graphics_queue,
-                        command_buffer);
+  end_single_time_commands(devices.logical_device, input_command_pool, input_graphics_queue, command_buffer);
 }
 
 void create_texture_image(SmDevices& devices,

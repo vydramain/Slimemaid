@@ -70,8 +70,7 @@ void copy_buffer(SmDevices* p_devices,
                 VkBuffer input_src_buffer,
                 VkBuffer input_dst_buffer,
                 VkDeviceSize input_buffer_size) {
-  VkCommandBuffer command_buffer = beginSingleTimeCommands(p_devices->logical_device,
-                                                           p_command_pool->command_pool);
+  VkCommandBuffer command_buffer = begin_single_time_commands(p_devices->logical_device, p_command_pool->command_pool);
 
   VkBufferCopy copy_region{};
   copy_region.srcOffset = 0;  // Optional
@@ -83,10 +82,8 @@ void copy_buffer(SmDevices* p_devices,
                   1,
                   &copy_region);
 
-  endSingleTimeCommands(p_devices->logical_device,
-                        p_command_pool->command_pool,
-                        p_queues->graphics_queue,
-                        command_buffer);
+  end_single_time_commands(p_devices->logical_device, p_command_pool->command_pool, p_queues->graphics_queue,
+                           command_buffer);
 }
 
 void copy_buffer_to_image(SmDevices input_devices,
@@ -96,8 +93,7 @@ void copy_buffer_to_image(SmDevices input_devices,
                           VkImage input_image,
                           uint32_t input_width,
                           uint32_t input_height) {
-  VkCommandBuffer command_buffer = beginSingleTimeCommands(input_devices.logical_device,
-                                                           input_command_pool);
+  VkCommandBuffer command_buffer = begin_single_time_commands(input_devices.logical_device, input_command_pool);
 
   VkBufferImageCopy image_region{};
   image_region.bufferOffset = 0;
@@ -117,10 +113,7 @@ void copy_buffer_to_image(SmDevices input_devices,
                          1,
                          &image_region);
 
-  endSingleTimeCommands(input_devices.logical_device,
-                        input_command_pool,
-                        input_graphics_queue,
-                        command_buffer);
+  end_single_time_commands(input_devices.logical_device, input_command_pool, input_graphics_queue, command_buffer);
 }
 
 void create_vertex_buffer(SmDevices* p_devices,

@@ -148,7 +148,9 @@ class SmVulkanRendererSystem {
                            descriptor_pool,
                            graphics_pipeline,
                            msaa_samples.msaa_samples);
-    createCommandPool();
+    create_command_pool(devices,
+                        surface,
+                        &command_pool);
     createDepthResources();
     createColorResources();
     createFramebuffers();
@@ -307,37 +309,32 @@ class SmVulkanRendererSystem {
     std::cout << "Framebuffers creation and implementation processs ends with success..." << std::endl;
   }
 
-  void createCommandPool() {
-    SmQueueFamilyIndices queueFamilyIndices = find_transfer_queue_families(devices.physical_device,
-                                                                           surface);
-
-    VkCommandPoolCreateInfo commandPoolCreateInfo{};
-    commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndices.graphics_family.value();
-
-    if (VK_SUCCESS !=
-        vkCreateCommandPool(devices.logical_device,
-                            &commandPoolCreateInfo,
-                            nullptr,
-                            &command_pool.command_pool)) {
-      throw std::runtime_error("Failed to create command pool");
-    }
-
-    std::cout << "Command pool creation process ends with success..." << std::endl;
-  }
-
   void createDepthResources() {
     VkFormat depthFormat = find_depth_format(devices);
 
-    create_image(swap_chain.swap_chain_extent.width, swap_chain.swap_chain_extent.height, 1, msaa_samples.msaa_samples,
-                 depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depth_buffers.depth_image, depth_buffers.depth_image_memory,
+    create_image(swap_chain.swap_chain_extent.width,
+                 swap_chain.swap_chain_extent.height,
+                 1,
+                 msaa_samples.msaa_samples,
+                 depthFormat,
+                 VK_IMAGE_TILING_OPTIMAL,
+                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                 depth_buffers.depth_image,
+                 depth_buffers.depth_image_memory,
                  devices);
-    depth_buffers.depth_image_view =
-        create_image_view(devices, depth_buffers.depth_image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
-    transition_image_layout(devices, command_pool.command_pool, queues.graphics_queue, depth_buffers.depth_image,
-                            depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    depth_buffers.depth_image_view = create_image_view(devices,
+                                                       depth_buffers.depth_image,
+                                                       depthFormat,
+                                                       VK_IMAGE_ASPECT_DEPTH_BIT,
+                                                       1);
+    transition_image_layout(devices,
+                            command_pool.command_pool,
+                            queues.graphics_queue,
+                            depth_buffers.depth_image,
+                            depthFormat,
+                            VK_IMAGE_LAYOUT_UNDEFINED,
+                            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                             1);
 
     std::cout << "Depth resources creation process ends with success..." << std::endl;
@@ -373,7 +370,7 @@ class SmVulkanRendererSystem {
   }
 
   void copyBuffer(VkBuffer inputSrcBuffer, VkBuffer inputDstBuffer, VkDeviceSize inputBufferSize) {
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands(devices.logical_device, command_pool.command_pool);
+    VkCommandBuffer commandBuffer = begin_single_time_commands(devices.logical_device, command_pool.command_pool);
 
     VkBufferCopy copyRegion{};
     copyRegion.srcOffset = 0;  // Optional
@@ -381,7 +378,7 @@ class SmVulkanRendererSystem {
     copyRegion.size = inputBufferSize;
     vkCmdCopyBuffer(commandBuffer, inputSrcBuffer, inputDstBuffer, 1, &copyRegion);
 
-    endSingleTimeCommands(devices.logical_device, command_pool.command_pool, queues.graphics_queue, commandBuffer);
+    end_single_time_commands(devices.logical_device, command_pool.command_pool, queues.graphics_queue, commandBuffer);
   }
 
   void createDescriptorPool() {
