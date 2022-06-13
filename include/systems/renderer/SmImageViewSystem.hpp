@@ -2,6 +2,7 @@
 ------------------------------------
   Slimemaid Source Code (03.06.2022)
   This file is part of Slimemaid Source Code.
+
 ------------------------------------
 */
 
@@ -18,30 +19,30 @@
 #include "components/renderer/SmTextureImageViewSampler.hpp"
 
 VkImageView create_image_view(SmDevices devices,
-                            VkImage inputImage,
-                            VkFormat inputFormat,
-                            VkImageAspectFlags inputAspectMask,
-                            uint32_t inputMipLevels) {
-  VkImageViewCreateInfo viewInfo{};
-  viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-  viewInfo.image = inputImage;
-  viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  viewInfo.format = inputFormat;
-  viewInfo.subresourceRange.aspectMask = inputAspectMask;
-  viewInfo.subresourceRange.baseMipLevel = 0;
-  viewInfo.subresourceRange.levelCount = inputMipLevels;
-  viewInfo.subresourceRange.baseArrayLayer = 0;
-  viewInfo.subresourceRange.layerCount = 1;
+                            VkImage input_image,
+                            VkFormat input_format,
+                            VkImageAspectFlags input_aspect_mask,
+                            uint32_t input_mip_levels) {
+  VkImageViewCreateInfo view_info{};
+  view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+  view_info.image = input_image;
+  view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  view_info.format = input_format;
+  view_info.subresourceRange.aspectMask = input_aspect_mask;
+  view_info.subresourceRange.baseMipLevel = 0;
+  view_info.subresourceRange.levelCount = input_mip_levels;
+  view_info.subresourceRange.baseArrayLayer = 0;
+  view_info.subresourceRange.layerCount = 1;
 
-  VkImageView imageView;
+  VkImageView image_view;
   if (vkCreateImageView(devices.logical_device,
-                        &viewInfo,
+                        &view_info,
                         nullptr,
-                        &imageView) != VK_SUCCESS) {
+                        &image_view) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create texture image view");
   }
 
-  return imageView;
+  return image_view;
 }
 
 void createTextureImageView(SmDevices devices,

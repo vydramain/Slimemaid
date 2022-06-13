@@ -162,7 +162,9 @@ class SmVulkanRendererSystem {
                            texture_model_resources,
                            texture_model_resources_read_handler,
                            texture_model_resources.mip_levels);
-    createTextureSampler();
+    create_texture_sampler(devices,
+                           texture_model_resources,
+                           &texture_model_resources_read_handler);
     loadModel(&scene_model_resources);
     create_vertex_buffer(&devices,
                          &command_pool,
@@ -350,36 +352,6 @@ class SmVulkanRendererSystem {
                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, color_image.color_image, color_image.color_image_memory, devices);
     color_image.color_image_view =
         create_image_view(devices, color_image.color_image, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
-  }
-
-  void createTextureSampler() {
-    VkPhysicalDeviceProperties deviceProperties{};
-    vkGetPhysicalDeviceProperties(devices.physical_device, &deviceProperties);
-
-    VkSamplerCreateInfo samplerCreateInfo{};
-    samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
-    samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
-    samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerCreateInfo.anisotropyEnable = VK_TRUE;
-    samplerCreateInfo.maxAnisotropy = deviceProperties.limits.maxSamplerAnisotropy;
-    samplerCreateInfo.borderColor = VK_BORDER_COLOR_INT_TRANSPARENT_BLACK;
-    samplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
-    samplerCreateInfo.compareEnable = VK_FALSE;
-    samplerCreateInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-    samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    samplerCreateInfo.mipLodBias = 0.0f;
-    samplerCreateInfo.minLod = 0.0f;
-    samplerCreateInfo.maxLod = static_cast<float>(texture_model_resources.mip_levels);
-
-    if (VK_SUCCESS != vkCreateSampler(devices.logical_device, &samplerCreateInfo, nullptr,
-                                      &texture_model_resources_read_handler.texture_sampler)) {
-      throw std::runtime_error("Failed to create texture sampler");
-    }
-
-    std::cout << "Texture sampler creation process ends with success..." << std::endl;
   }
 
   void createUniformBuffers() {

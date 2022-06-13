@@ -345,4 +345,38 @@ void create_texture_image(SmDevices& devices,
   std::cout << "Texture image transition process ends with success..." << std::endl;
 }
 
+void create_texture_sampler(SmDevices input_devices,
+                            SmTextureImage input_texture_model_resources,
+                            SmTextureImageViewSampler* p_texture_model_resources_read_handler) {
+  VkPhysicalDeviceProperties device_properties{};
+  vkGetPhysicalDeviceProperties(input_devices.physical_device, &device_properties);
+
+  VkSamplerCreateInfo sampler_create_info{};
+  sampler_create_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+  sampler_create_info.magFilter = VK_FILTER_LINEAR;
+  sampler_create_info.minFilter = VK_FILTER_LINEAR;
+  sampler_create_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  sampler_create_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  sampler_create_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  sampler_create_info.anisotropyEnable = VK_TRUE;
+  sampler_create_info.maxAnisotropy = device_properties.limits.maxSamplerAnisotropy;
+  sampler_create_info.borderColor = VK_BORDER_COLOR_INT_TRANSPARENT_BLACK;
+  sampler_create_info.unnormalizedCoordinates = VK_FALSE;
+  sampler_create_info.compareEnable = VK_FALSE;
+  sampler_create_info.compareOp = VK_COMPARE_OP_ALWAYS;
+  sampler_create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  sampler_create_info.mipLodBias = 0.0f;
+  sampler_create_info.minLod = 0.0f;
+  sampler_create_info.maxLod = static_cast<float>(input_texture_model_resources.mip_levels);
+
+  if (VK_SUCCESS != vkCreateSampler(input_devices.logical_device,
+                                    &sampler_create_info,
+                                    nullptr,
+                                    &p_texture_model_resources_read_handler->texture_sampler)) {
+    throw std::runtime_error("Failed to create texture sampler");
+  }
+
+  std::cout << "Texture sampler creation process ends with success..." << std::endl;
+}
+
 #endif  // SLIMEMAID_TEXTUREIMAGE_HPP
