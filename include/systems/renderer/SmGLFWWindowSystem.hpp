@@ -16,11 +16,14 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include <iostream>
 #include <vector>
 
-#include "systems/debug/SmDebugSystem.hpp"
+#include "components/renderer/SmGLFWWindow.hpp"
+#include "components/renderer/SmSurface.hpp"
+#include "components/renderer/SmVulkanInstance.hpp"
 
-std::vector<const char*> getRequiredExtensions(bool input_enable_validation_layers) {
+std::vector<const char*> get_required_extensions(bool input_enable_validation_layers) {
   uint32_t glfw_extensions_count = 0;
   const char** glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extensions_count);
 
@@ -34,8 +37,8 @@ std::vector<const char*> getRequiredExtensions(bool input_enable_validation_laye
 }
 
 void create_surface(SmGLFWWindow input_window,
-                   SmVulkanInstance input_instance,
-                   SmSurface* p_surface) {
+                    SmVulkanInstance input_instance,
+                    SmSurface* p_surface) {
   if (VK_SUCCESS != glfwCreateWindowSurface(input_instance.instance,
                                             input_window.glfw_window,
                                             nullptr,

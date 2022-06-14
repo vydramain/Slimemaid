@@ -11,8 +11,18 @@
 
 #include <vulkan/vulkan.h>
 
+#include <iostream>
+#include <vector>
+
 #include "systems/renderer/SmImageViewSystem.hpp"
 #include "systems/renderer/SmTextureImageSystem.hpp"
+
+#include "components/renderer/SmCommandPool.hpp"
+#include "components/renderer/SmDepthBuffers.hpp"
+#include "components/renderer/SmDevices.hpp"
+#include "components/renderer/SmQueues.hpp"
+#include "components/renderer/SmSamplingFlags.hpp"
+#include "components/renderer/SmSwapChain.hpp"
 
 VkFormat find_supported_depth_format(SmDevices input_devices,
                                      const std::vector<VkFormat>& candidates,
@@ -41,7 +51,7 @@ VkFormat find_depth_format(SmDevices input_devices) {
                                      VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
-void createDepthResources(SmDevices input_devices,
+void create_depth_resources(SmDevices input_devices,
                           SmQueues input_queues,
                           SmSamplingFlags input_msaa_samples,
                           SmSwapChain* p_swap_chain,

@@ -13,16 +13,24 @@
 
 #include <vulkan/vulkan.h>
 
+#include <algorithm>
+#include <iostream>
+#include <limits>
+#include <vector>
+
+#include "systems/renderer/SmGLFWWindowSystem.hpp"
+#include "systems/renderer/SmImageViewSystem.hpp"
+#include "systems/renderer/SmQueueFamiliesSystem.hpp"
+
+#include "components/renderer/SmColorImage.hpp"
+#include "components/renderer/SmDepthBuffers.hpp"
 #include "components/renderer/SmDevices.hpp"
 #include "components/renderer/SmGLFWWindow.hpp"
+#include "components/renderer/SmGraphicsPipeline.hpp"
+#include "components/renderer/SmQueueFamilyIndices.hpp"
 #include "components/renderer/SmSurface.hpp"
 #include "components/renderer/SmSwapChain.hpp"
 #include "components/renderer/SmSwapChainSupportDetails.hpp"
-
-#include "systems/renderer/SmImageViewSystem.hpp"
-#include "systems/renderer/SmGLFWWindowSystem.hpp"
-#include "systems/renderer/SmQueueFamiliesSystem.hpp"
-#include "systems/renderer/SmGraphicsPipelineSystem.hpp"
 
 void clean_up_swap_chain(SmDevices input_devices,
                          SmColorImage input_color_image,

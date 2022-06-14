@@ -20,9 +20,10 @@
 
 #include <vulkan/vulkan.h>
 
-#include <cstdio>
 #include <cstdint>  // Necessary for uint32_t
 #include <stdexcept>
+
+#include "components/renderer/SmDevices.hpp"
 
 uint32_t find_memory_type(SmDevices input_devices,
                           uint32_t input_type_filter,

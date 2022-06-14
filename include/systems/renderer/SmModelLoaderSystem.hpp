@@ -9,20 +9,32 @@
 #ifndef SLIMEMAID_MODELLOADER_HPP
 #define SLIMEMAID_MODELLOADER_HPP
 
+#include <iostream>
+#include <stdexcept>
+#include <unordered_map>
 #include <vector>
 
+#define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
+
+#include "components/renderer/SmModelResources.hpp"
+#include "components/renderer/SmVertex.hpp"
 
 const std::string MODEL_PATH = "raws/viking_room/viking_room.obj";
 const std::string TEXTURE_PATH = "raws/viking_room/viking_room.png";
 
-void loadModel(SmModelResources* p_model_resources) {
+void load_model(SmModelResources* p_model_resources) {
   tinyobj::attrib_t attribute;
   std::vector<tinyobj::shape_t> shapes;
   std::vector<tinyobj::material_t> materials;
   std::string warn, err;
 
-  if (!tinyobj::LoadObj(&attribute, &shapes, &materials, &warn, &err, MODEL_PATH.c_str())) {
+  if (!tinyobj::LoadObj(&attribute,
+                        &shapes,
+                        &materials,
+                        &warn,
+                        &err,
+                        MODEL_PATH.c_str())) {
     throw std::runtime_error("Failed to load model from '" + MODEL_PATH + "' because: " + warn + err);
   } else {
     std::cout << "Model from '" + MODEL_PATH + "' was loaded with success..." << std::endl;

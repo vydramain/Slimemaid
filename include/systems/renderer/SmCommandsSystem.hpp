@@ -10,10 +10,20 @@
 
 #include <vulkan/vulkan.h>
 
-#include "components/renderer/SmDevices.hpp"
-#include "components/renderer/SmSurface.hpp"
-#include "components/renderer/SmCommandPool.hpp"
+#include <array>
+#include <iostream>
+#include <vector>
+
 #include "systems/renderer/SmQueueFamiliesSystem.hpp"
+
+#include "components/renderer/SmCommandPool.hpp"
+#include "components/renderer/SmDescriptorPool.hpp"
+#include "components/renderer/SmDevices.hpp"
+#include "components/renderer/SmGraphicsPipeline.hpp"
+#include "components/renderer/SmModelResources.hpp"
+#include "components/renderer/SmQueueFamilyIndices.hpp"
+#include "components/renderer/SmSurface.hpp"
+#include "components/renderer/SmSwapChain.hpp"
 
 VkCommandBuffer begin_single_time_commands(VkDevice input_device,
                                            VkCommandPool input_command_pool) {
@@ -59,8 +69,8 @@ void end_single_time_commands(VkDevice input_device,
 }
 
 void create_command_pool(SmDevices input_devices,
-                       SmSurface input_surface,
-                       SmCommandPool* p_command_pool) {
+                         SmSurface input_surface,
+                         SmCommandPool* p_command_pool) {
   SmQueueFamilyIndices queue_family_indices = find_transfer_queue_families(input_devices.physical_device,
                                                                            input_surface);
 
@@ -80,7 +90,7 @@ void create_command_pool(SmDevices input_devices,
 }
 
 void create_command_buffers(SmDevices input_devices,
-                          SmCommandPool* p_command_pool) {
+                            SmCommandPool* p_command_pool) {
   p_command_pool->command_buffers.resize(p_command_pool->MAX_FRAMES_IN_FLIGHT);
 
   VkCommandBufferAllocateInfo command_buffer_allocate_info{};
@@ -98,33 +108,33 @@ void create_command_buffers(SmDevices input_devices,
   std::cout << "Command buffers creation process ends with success..." << std::endl;
 }
 
-void createSyncObjects(SmDevices input_devices,
-                       SmCommandPool* p_command_pool,
-                       std::vector<VkSemaphore>* p_image_available_semaphores,
-                       std::vector<VkSemaphore>* p_render_finished_semaphores,
-                       std::vector<VkFence>* p_flight_fences) {
+void create_sync_objects(SmDevices input_devices,
+                         SmCommandPool* p_command_pool,
+                         std::vector<VkSemaphore>* p_image_available_semaphores,
+                         std::vector<VkSemaphore>* p_render_finished_semaphores,
+                         std::vector<VkFence>* p_flight_fences) {
   p_image_available_semaphores->resize(p_command_pool->MAX_FRAMES_IN_FLIGHT);
   p_render_finished_semaphores->resize(p_command_pool->MAX_FRAMES_IN_FLIGHT);
   p_flight_fences->resize(p_command_pool->MAX_FRAMES_IN_FLIGHT);
 
-  VkSemaphoreCreateInfo semaphoreCreateInfo{};
-  semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+  VkSemaphoreCreateInfo semaphore_create_info{};
+  semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-  VkFenceCreateInfo fenceCreateInfo{};
-  fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-  fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+  VkFenceCreateInfo fence_create_info{};
+  fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
   for (size_t i = 0; i < p_command_pool->MAX_FRAMES_IN_FLIGHT; i++) {
     if (VK_SUCCESS != vkCreateSemaphore(input_devices.logical_device,
-                                        &semaphoreCreateInfo,
+                                        &semaphore_create_info,
                                         nullptr,
                                         &(*p_image_available_semaphores)[i]) ||
         VK_SUCCESS != vkCreateSemaphore(input_devices.logical_device,
-                                        &semaphoreCreateInfo,
+                                        &semaphore_create_info,
                                         nullptr,
                                         &(*p_render_finished_semaphores)[i]) ||
         VK_SUCCESS != vkCreateFence(input_devices.logical_device,
-                                    &fenceCreateInfo,
+                                    &fence_create_info,
                                     nullptr,
                                     &(*p_flight_fences)[i])) {
       throw std::runtime_error("Failed to create semaphores or fence");
@@ -132,6 +142,83 @@ void createSyncObjects(SmDevices input_devices,
   }
 
   std::cout << "Sync objects creation process ends with success..." << std::endl;
+}
+
+void record_command_buffer(uint32_t image_index,
+                           uint32_t input_current_frame_index,
+                           SmCommandPool input_command_pool,
+                           SmGraphicsPipeline input_graphics_pipeline,
+                           SmSwapChain* p_swap_chain,
+                           SmDescriptorPool* p_descriptor_pool,
+                           SmModelResources* p_model_resources) {
+  VkCommandBufferBeginInfo buffer_begin_info{};
+  buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  buffer_begin_info.flags = 0;                   // Optional
+  buffer_begin_info.pInheritanceInfo = nullptr;  // optional
+
+  if (VK_SUCCESS != vkBeginCommandBuffer(input_command_pool.command_buffers[input_current_frame_index],
+                                         &buffer_begin_info)) {
+    throw std::runtime_error("Failed to begin recording command buffer");
+  }
+
+  VkRenderPassBeginInfo render_pass_begin_info{};
+  render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  render_pass_begin_info.renderPass = input_graphics_pipeline.render_pass;
+  render_pass_begin_info.framebuffer = p_swap_chain->swap_chain_frame_buffers[image_index];
+  render_pass_begin_info.renderArea.offset = {0, 0};
+  render_pass_begin_info.renderArea.extent = p_swap_chain->swap_chain_extent;
+
+  std::array<VkClearValue, 2> clear_values{};
+  clear_values[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+  clear_values[1].depthStencil = {1.0f, 0};
+
+  render_pass_begin_info.clearValueCount = static_cast<uint32_t>(clear_values.size());
+  render_pass_begin_info.pClearValues = clear_values.data();
+
+  vkCmdBeginRenderPass(input_command_pool.command_buffers[input_current_frame_index],
+                       &render_pass_begin_info,
+                       VK_SUBPASS_CONTENTS_INLINE);
+  vkCmdBindPipeline(input_command_pool.command_buffers[input_current_frame_index],
+                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    input_graphics_pipeline.pipeline);
+
+  VkBuffer vertexBuffers[] = {p_model_resources->vertex_buffer};
+  VkDeviceSize offsets[] = {0};
+  vkCmdBindVertexBuffers(input_command_pool.command_buffers[input_current_frame_index],
+                         0,
+                         1,
+                         vertexBuffers,
+                         offsets);
+  vkCmdBindIndexBuffer(input_command_pool.command_buffers[input_current_frame_index],
+                       p_model_resources->index_buffer,
+                       0,
+                       VK_INDEX_TYPE_UINT32);
+  vkCmdBindDescriptorSets(input_command_pool.command_buffers[input_current_frame_index],
+                          VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          input_graphics_pipeline.pipeline_layout,
+                          0,
+                          1,
+                          p_descriptor_pool->descriptor_sets.data(),
+                          0,
+                          nullptr);
+  vkCmdDrawIndexed(input_command_pool.command_buffers[input_current_frame_index],
+                   static_cast<uint32_t>(p_model_resources->indices.size()),
+                   1,
+                   0,
+                   0,
+                   0);
+
+  vkCmdEndRenderPass(input_command_pool.command_buffers[input_current_frame_index]);
+
+  if (VK_SUCCESS != vkEndCommandBuffer(input_command_pool.command_buffers[input_current_frame_index])) {
+    throw std::runtime_error("Failed to record command buffer");
+  }
+
+  // Documentation's description for vkCmdDraw function. Parameters:
+  // vertexCount - Even though we don't have a vertex buffer, we technically still have 3
+  // scene_model_resources.vertices to draw. instanceCount - Used for instanced rendering, use 1 if you're not doing
+  // that. firstVertex - Used as an offset into the vertex buffer, defines the lowest value of gl_VertexIndex.
+  // firstInstance - Used as an offset for instanced rendering, defines the lowest value of gl_InstanceIndex.
 }
 
 #endif  // SLIMEMAID_SMCOMMANDSSYSTEM_HPP

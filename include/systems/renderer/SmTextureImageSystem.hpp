@@ -12,16 +12,23 @@
 #ifndef SLIMEMAID_TEXTUREIMAGE_HPP
 #define SLIMEMAID_TEXTUREIMAGE_HPP
 
+#include <vulkan/vulkan.h>
+
+#include <iostream>
+#include <stdexcept>
+
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include <stb_image.h>
 
-#include "components/renderer/SmDevices.hpp"
-
-#include "systems/renderer/SmStencilSystem.hpp"
 #include "systems/renderer/SmBuffersSystem.hpp"
 #include "systems/renderer/SmCommandsSystem.hpp"
-#include "systems/renderer/SmGrahicsMemorySystem.hpp"
+#include "systems/renderer/SmGraphicsMemorySystem.hpp"
+#include "systems/renderer/SmModelLoaderSystem.hpp"
 #include "systems/renderer/SmStencilSystem.hpp"
+
+#include "components/renderer/SmDevices.hpp"
+#include "components/renderer/SmTextureImage.hpp"
+#include "components/renderer/SmTextureImageViewSampler.hpp"
 
 void generate_mipmaps(uint32_t input_texture_width,
                       uint32_t input_texture_height,
@@ -62,8 +69,16 @@ void generate_mipmaps(uint32_t input_texture_width,
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
     barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
-    vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr,
-                         0, nullptr, 1, &barrier);
+    vkCmdPipelineBarrier(command_buffer,
+                         VK_PIPELINE_STAGE_TRANSFER_BIT,
+                         VK_PIPELINE_STAGE_TRANSFER_BIT,
+                         0,
+                         0,
+                         nullptr,
+                         0,
+                         nullptr,
+                         1,
+                         &barrier);
 
     VkImageBlit blit{};
     blit.srcOffsets[0] = {0, 0, 0};
@@ -213,7 +228,7 @@ void transition_image_layout(SmDevices& devices,
   if (VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL == input_new_image_layout) {
     image_memory_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 
-    if (hasStencilComponent(input_format)) {
+    if (has_stencil_component(input_format)) {
       image_memory_barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
     }
   } else {

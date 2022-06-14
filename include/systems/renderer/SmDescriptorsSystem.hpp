@@ -13,10 +13,14 @@
 
 #include <array>
 #include <iostream>
-#include <stdexcept>
+#include <vector>
 
-#include "components/renderer/SmDevices.hpp"
+#include "components/renderer/SmCommandPool.hpp"
 #include "components/renderer/SmDescriptorPool.hpp"
+#include "components/renderer/SmDevices.hpp"
+#include "components/renderer/SmTextureImageViewSampler.hpp"
+#include "components/renderer/SmUniformBufferObject.hpp"
+#include "components/renderer/SmUniformBuffers.hpp"
 
 void create_descriptor_set_layout(SmDevices input_devices,
                                   SmDescriptorPool* p_descriptor_pool) {

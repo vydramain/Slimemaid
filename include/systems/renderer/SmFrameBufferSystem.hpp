@@ -11,13 +11,20 @@
 
 #include <vulkan/vulkan.h>
 
-#include "components/renderer/SmDevices.hpp"
-#include "components/renderer/SmSwapChain.hpp"
-#include "components/renderer/SmColorImage.hpp"
-#include "components/renderer/SmSamplingFlags.hpp"
-#include "systems/renderer/SmFrameBufferSystem.hpp"
+#include <array>
+#include <iostream>
 
-void createColorResources(SmDevices input_devices,
+#include "systems/renderer/SmImageViewSystem.hpp"
+#include "systems/renderer/SmTextureImageSystem.hpp"
+
+#include "components/renderer/SmColorImage.hpp"
+#include "components/renderer/SmDepthBuffers.hpp"
+#include "components/renderer/SmDevices.hpp"
+#include "components/renderer/SmGraphicsPipeline.hpp"
+#include "components/renderer/SmSamplingFlags.hpp"
+#include "components/renderer/SmSwapChain.hpp"
+
+void create_color_resources(SmDevices input_devices,
                           SmSwapChain input_swap_chain,
                           SmSamplingFlags input_msaa_samples,
                           SmColorImage* p_color_image) {

@@ -13,13 +13,19 @@
 
 #include <vulkan/vulkan.h>
 
-#include <cstdio>
+#include <cstring>
+#include <iostream>
 #include <stdexcept>
 
-#include "components/renderer/SmDevices.hpp"
-
 #include "systems/renderer/SmCommandsSystem.hpp"
-#include "systems/renderer/SmGrahicsMemorySystem.hpp"
+#include "systems/renderer/SmGraphicsMemorySystem.hpp"
+
+#include "components/renderer/SmCommandPool.hpp"
+#include "components/renderer/SmDevices.hpp"
+#include "components/renderer/SmModelResources.hpp"
+#include "components/renderer/SmQueues.hpp"
+#include "components/renderer/SmUniformBufferObject.hpp"
+#include "components/renderer/SmUniformBuffers.hpp"
 
 void create_buffer(SmDevices input_devices,
                    VkDeviceSize input_size,

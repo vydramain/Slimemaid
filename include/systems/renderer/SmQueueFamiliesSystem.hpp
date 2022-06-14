@@ -14,10 +14,8 @@
 
 #include <vector>
 
-#include "components/renderer/SmDevices.hpp"
-#include "components/renderer/SmSurface.hpp"
 #include "components/renderer/SmQueueFamilyIndices.hpp"
-
+#include "components/renderer/SmSurface.hpp"
 
 SmQueueFamilyIndices find_transfer_queue_families(VkPhysicalDevice input_device,
                                                   SmSurface input_surface) {

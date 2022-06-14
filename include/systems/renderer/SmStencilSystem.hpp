@@ -10,8 +10,9 @@
 
 #include <vulkan/vulkan.h>
 
-static bool hasStencilComponent(VkFormat format) {
-  return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+static bool has_stencil_component(VkFormat input_format) {
+  return input_format == VK_FORMAT_D32_SFLOAT_S8_UINT ||
+         input_format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
 #endif  // SLIMEMAID_SMSTENCILSYSTEM_HPP

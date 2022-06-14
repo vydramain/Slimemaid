@@ -15,17 +15,22 @@
 
 #include <vulkan/vulkan.h>
 
-#include <stdexcept>
 #include <iostream>
-#include <cstdint>  // Necessary for uint32_t
+#include <set>
 #include <vector>
 
-#include "components/renderer/SmDevices.hpp"
-#include "components/renderer/SmVulkanInstance.hpp"
-
-#include "systems/renderer/SmSwapChainSystem.hpp"
 #include "systems/renderer/SmQueueFamiliesSystem.hpp"
 #include "systems/renderer/SmSamplingFlagsSystem.hpp"
+#include "systems/renderer/SmSwapChainSystem.hpp"
+#include "systems/debug/SmDebugSystem.hpp"
+
+#include "components/renderer/SmDevices.hpp"
+#include "components/renderer/SmQueueFamilyIndices.hpp"
+#include "components/renderer/SmQueues.hpp"
+#include "components/renderer/SmSamplingFlags.hpp"
+#include "components/renderer/SmSurface.hpp"
+#include "components/renderer/SmSwapChainSupportDetails.hpp"
+#include "components/renderer/SmVulkanInstance.hpp"
 
 const std::vector<const char*> device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
@@ -164,6 +169,31 @@ void create_logical_device(SmDevices* devices,
                    &queues->present_queue);
 
   std::cout << "Logical devices.devices creation process ends with success..." << std::endl;
+}
+
+int rate_device_suitability(VkPhysicalDevice input_device) {
+  VkPhysicalDeviceProperties device_properties;
+  VkPhysicalDeviceFeatures device_features;
+
+  vkGetPhysicalDeviceProperties(input_device, &device_properties);
+  vkGetPhysicalDeviceFeatures(input_device, &device_features);
+
+  int score = 0;
+
+  // Discrete GPUs have a significant performance advantage
+  if (VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU == device_properties.deviceType) {
+    score += 1000;
+  }
+
+  // Maximum possible size of textures affects graphics quality
+  score += device_properties.limits.maxImageDimension2D;
+
+  // Application can't function without geometry shaders
+  if (!device_features.geometryShader) {
+    return 0;
+  }
+
+  return score;
 }
 
 #endif  // SLIMEMAID_SMDEVICESYSTEM_HPP
