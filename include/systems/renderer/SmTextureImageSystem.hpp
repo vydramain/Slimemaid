@@ -178,7 +178,7 @@ void create_image(SmDevices input_devices,
   alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   alloc_info.allocationSize = mem_requirements.size;
   alloc_info.memoryTypeIndex =
-      find_memory_type(&input_devices,
+      find_memory_type(input_devices,
                        mem_requirements.memoryTypeBits,
                        input_properties);
 
@@ -263,7 +263,7 @@ void transition_image_layout(SmDevices& devices,
   end_single_time_commands(devices.logical_device, input_command_pool, input_graphics_queue, command_buffer);
 }
 
-void create_texture_image(SmDevices& devices,
+void create_texture_image(SmDevices input_devices,
                           VkCommandPool& command_pool,
                           VkQueue& graphics_queue,
                           uint32_t& mip_levels,
@@ -289,7 +289,7 @@ void create_texture_image(SmDevices& devices,
   VkBuffer staging_buffer;
   VkDeviceMemory staging_buffer_memory;
 
-  create_buffer(&devices,
+  create_buffer(input_devices,
                 image_size,
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -297,18 +297,18 @@ void create_texture_image(SmDevices& devices,
                 &staging_buffer_memory);
 
   void* data;
-  vkMapMemory(devices.logical_device,
+  vkMapMemory(input_devices.logical_device,
               staging_buffer_memory,
               0,
               image_size,
               0,
               &data);
   memcpy(data, pixels, static_cast<size_t>(image_size));
-  vkUnmapMemory(devices.logical_device, staging_buffer_memory);
+  vkUnmapMemory(input_devices.logical_device, staging_buffer_memory);
 
   stbi_image_free(pixels);
 
-  create_image(devices,
+  create_image(input_devices,
                texture_width,
                texture_height, mip_levels,
                VK_SAMPLE_COUNT_1_BIT,
@@ -319,26 +319,26 @@ void create_texture_image(SmDevices& devices,
                texture_image,
                texture_image_memory);
 
-  transition_image_layout(devices, command_pool, graphics_queue,
+  transition_image_layout(input_devices, command_pool, graphics_queue,
                           texture_image,
                           VK_FORMAT_R8G8B8A8_SRGB,
                           VK_IMAGE_LAYOUT_UNDEFINED,
                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mip_levels);
-  copy_buffer_to_image(devices, command_pool, graphics_queue,
+  copy_buffer_to_image(input_devices, command_pool, graphics_queue,
                        staging_buffer,
                        texture_image,
                        static_cast<size_t>(texture_width),
                        static_cast<size_t>(texture_height));
   // transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
 
-  vkDestroyBuffer(devices.logical_device, staging_buffer, nullptr);
-  vkFreeMemory(devices.logical_device, staging_buffer_memory, nullptr);
+  vkDestroyBuffer(input_devices.logical_device, staging_buffer, nullptr);
+  vkFreeMemory(input_devices.logical_device, staging_buffer_memory, nullptr);
 
   generate_mipmaps(texture_width,
                    texture_height, mip_levels,
                    texture_image,
                    VK_FORMAT_R8G8B8A8_SRGB, command_pool,
-                   graphics_queue, devices);
+                   graphics_queue, input_devices);
 
   std::cout << "Texture image transition process ends with success..." << std::endl;
 }

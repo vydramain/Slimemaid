@@ -24,11 +24,11 @@
 #include <cstdint>  // Necessary for uint32_t
 #include <stdexcept>
 
-uint32_t find_memory_type(SmDevices* p_devices,
+uint32_t find_memory_type(SmDevices input_devices,
                           uint32_t input_type_filter,
                           VkMemoryPropertyFlags input_properties) {
   VkPhysicalDeviceMemoryProperties device_memory_properties;
-  vkGetPhysicalDeviceMemoryProperties(p_devices->physical_device,
+  vkGetPhysicalDeviceMemoryProperties(input_devices.physical_device,
                                       &device_memory_properties);
 
   for (uint32_t i = 0; i < device_memory_properties.memoryTypeCount; i++) {

@@ -88,12 +88,12 @@ class SmVulkanRendererSystem {
   SmUniformBuffers uniform_buffers;
   SmSamplingFlags msaa_samples;
 
-  std::vector<VkSemaphore> imageAvailableSemaphores;
-  std::vector<VkSemaphore> renderFinishedSemaphores;
-  std::vector<VkFence> inFlightFences;
+  std::vector<VkSemaphore> image_available_semaphores;
+  std::vector<VkSemaphore> render_finished_semaphores;
+  std::vector<VkFence> in_flight_fences;
 
-  bool framebufferResized = false;
-  uint32_t currentFrame = 0;
+  bool frame_buffer_resized_flag = false;
+  uint32_t current_frame_index = 0;
 
   void initWindow() {
     glfwInit();
@@ -111,7 +111,7 @@ class SmVulkanRendererSystem {
 
   static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
     auto app = reinterpret_cast<SmVulkanRendererSystem*>(glfwGetWindowUserPointer(window));
-    app->framebufferResized = true;
+    app->frame_buffer_resized_flag = true;
   }
 
   void initVulkan() {
@@ -141,8 +141,7 @@ class SmVulkanRendererSystem {
                        msaa_samples,
                        &graphics_pipeline,
                        &swap_chain);
-    createDescriptorSetLayout(devices,
-                              &descriptor_pool);
+    create_descriptor_set_layout(devices, &descriptor_pool);
     createGraphicsPipeline(VERTEX_SHADERS_PATH,
                            FRAGMENT_SHADERS_PATH,
                            devices,
@@ -182,19 +181,32 @@ class SmVulkanRendererSystem {
                            texture_model_resources,
                            &texture_model_resources_read_handler);
     loadModel(&scene_model_resources);
-    create_vertex_buffer(&devices,
+    create_vertex_buffer(devices,
                          &command_pool,
                          &queues,
                          &scene_model_resources);
-    create_index_buffer(&devices,
+    create_index_buffer(devices,
                         &command_pool,
                         &queues,
                         &scene_model_resources);
-    createUniformBuffers();
-    createDescriptorPool();
-    createDescriptorSets();
-    createCommandBuffers();
-    createSyncObjects();
+    create_uniform_buffers(devices,
+                           &command_pool,
+                           &uniform_buffers);
+    create_descriptor_pool(devices,
+                           &command_pool,
+                           &descriptor_pool);
+    create_descriptor_sets(devices,
+                           texture_model_resources_read_handler,
+                           &uniform_buffers,
+                           &command_pool,
+                           &descriptor_pool);
+    create_command_buffers(devices,
+                           &command_pool);
+    createSyncObjects(devices,
+                      &command_pool,
+                      &image_available_semaphores,
+                      &render_finished_semaphores,
+                      &in_flight_fences);
 
     std::cout << "Vulkan initialization process ends with success..." << std::endl;
   }
@@ -236,9 +248,9 @@ class SmVulkanRendererSystem {
     vkFreeMemory(devices.logical_device, scene_model_resources.vertex_buffer_memory, nullptr);
 
     for (size_t i = 0; i < command_pool.MAX_FRAMES_IN_FLIGHT; i++) {
-      vkDestroySemaphore(devices.logical_device, renderFinishedSemaphores[i], nullptr);
-      vkDestroySemaphore(devices.logical_device, imageAvailableSemaphores[i], nullptr);
-      vkDestroyFence(devices.logical_device, inFlightFences[i], nullptr);
+      vkDestroySemaphore(devices.logical_device, render_finished_semaphores[i], nullptr);
+      vkDestroySemaphore(devices.logical_device, image_available_semaphores[i], nullptr);
+      vkDestroyFence(devices.logical_device, in_flight_fences[i], nullptr);
     }
 
     vkDestroyCommandPool(devices.logical_device, command_pool.command_pool, nullptr);
@@ -298,155 +310,12 @@ class SmVulkanRendererSystem {
                          swap_chain,
                          msaa_samples,
                          &color_image);
-      create_frame_buffers(devices,
-                           graphics_pipeline,
-                           color_image,
-                           depth_buffers,
-                           &swap_chain);
+    create_frame_buffers(devices,
+                         graphics_pipeline,
+                         color_image,
+                         depth_buffers,
+                         &swap_chain);
     std::cout << "Swap chain recreation process ends with success..." << std::endl;
-  }
-
-  void createUniformBuffers() {
-    VkDeviceSize bufferSize = sizeof(SmUniformBufferObject);
-
-    uniform_buffers.uniform_buffers.resize(command_pool.MAX_FRAMES_IN_FLIGHT);
-    uniform_buffers.uniform_buffers_memory.resize(command_pool.MAX_FRAMES_IN_FLIGHT);
-
-    for (size_t i = 0; i < command_pool.MAX_FRAMES_IN_FLIGHT; i++) {
-      create_buffer(&devices,
-                    bufferSize,
-                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                    &uniform_buffers.uniform_buffers[i],
-                    &uniform_buffers.uniform_buffers_memory[i]);
-    }
-
-    std::cout << "Uniform buffer creation process ends with success..." << std::endl;
-  }
-
-  void copyBuffer(VkBuffer inputSrcBuffer, VkBuffer inputDstBuffer, VkDeviceSize inputBufferSize) {
-    VkCommandBuffer commandBuffer = begin_single_time_commands(devices.logical_device, command_pool.command_pool);
-
-    VkBufferCopy copyRegion{};
-    copyRegion.srcOffset = 0;  // Optional
-    copyRegion.dstOffset = 0;  // Optional
-    copyRegion.size = inputBufferSize;
-    vkCmdCopyBuffer(commandBuffer, inputSrcBuffer, inputDstBuffer, 1, &copyRegion);
-
-    end_single_time_commands(devices.logical_device, command_pool.command_pool, queues.graphics_queue, commandBuffer);
-  }
-
-  void createDescriptorPool() {
-    std::array<VkDescriptorPoolSize, 2> descriptorPoolSizes{};
-    descriptorPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptorPoolSizes[0].descriptorCount = static_cast<uint32_t>(command_pool.MAX_FRAMES_IN_FLIGHT);
-    descriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    descriptorPoolSizes[1].descriptorCount = static_cast<uint32_t>(command_pool.MAX_FRAMES_IN_FLIGHT);
-
-    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{};
-    descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    descriptorPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(descriptorPoolSizes.size());
-    descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSizes.data();
-    descriptorPoolCreateInfo.maxSets = static_cast<uint32_t>(command_pool.MAX_FRAMES_IN_FLIGHT);
-
-    if (VK_SUCCESS != vkCreateDescriptorPool(devices.logical_device, &descriptorPoolCreateInfo, nullptr,
-                                             &descriptor_pool.descriptor_pool)) {
-      throw std::runtime_error("Failed to create descriptor pool for uniform buffers");
-    }
-
-    std::cout << "Description pool creation process ends with success..." << std::endl;
-  }
-
-  void createDescriptorSets() {
-    std::vector<VkDescriptorSetLayout> layouts(command_pool.MAX_FRAMES_IN_FLIGHT,
-                                               descriptor_pool.descriptor_set_layout);
-    VkDescriptorSetAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = descriptor_pool.descriptor_pool;
-    allocInfo.descriptorSetCount = static_cast<uint32_t>(command_pool.MAX_FRAMES_IN_FLIGHT);
-    allocInfo.pSetLayouts = layouts.data();
-
-    descriptor_pool.descriptor_sets.resize(command_pool.MAX_FRAMES_IN_FLIGHT);
-    if (vkAllocateDescriptorSets(devices.logical_device, &allocInfo, descriptor_pool.descriptor_sets.data()) !=
-        VK_SUCCESS) {
-      throw std::runtime_error("Failed to allocate descriptor sets for uniform buffers");
-    }
-
-    for (size_t i = 0; i < command_pool.MAX_FRAMES_IN_FLIGHT; i++) {
-      VkDescriptorBufferInfo bufferInfo{};
-      bufferInfo.buffer = uniform_buffers.uniform_buffers[i];
-      bufferInfo.offset = 0;
-      bufferInfo.range = sizeof(SmUniformBufferObject);
-
-      VkDescriptorImageInfo imageInfo{};
-      imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-      imageInfo.imageView = texture_model_resources_read_handler.texture_image_view;
-      imageInfo.sampler = texture_model_resources_read_handler.texture_sampler;
-
-      std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
-      descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      descriptorWrites[0].dstSet = descriptor_pool.descriptor_sets[i];
-      descriptorWrites[0].dstBinding = 0;
-      descriptorWrites[0].dstArrayElement = 0;
-      descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-      descriptorWrites[0].descriptorCount = 1;
-      descriptorWrites[0].pBufferInfo = &bufferInfo;
-
-      descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-      descriptorWrites[1].dstSet = descriptor_pool.descriptor_sets[i];
-      descriptorWrites[1].dstBinding = 1;
-      descriptorWrites[1].dstArrayElement = 0;
-      descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      descriptorWrites[1].descriptorCount = 1;
-      descriptorWrites[1].pImageInfo = &imageInfo;
-
-      vkUpdateDescriptorSets(devices.logical_device, static_cast<uint32_t>(descriptorWrites.size()),
-                             descriptorWrites.data(), 0, nullptr);
-    }
-
-    std::cout << "Descriptor sets creation process ends with success..." << std::endl;
-  }
-
-  void createCommandBuffers() {
-    command_pool.command_buffers.resize(command_pool.MAX_FRAMES_IN_FLIGHT);
-
-    VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
-    commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    commandBufferAllocateInfo.commandPool = command_pool.command_pool;
-    commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    commandBufferAllocateInfo.commandBufferCount = (uint32_t) command_pool.command_buffers.size();
-
-    if (VK_SUCCESS != vkAllocateCommandBuffers(devices.logical_device, &commandBufferAllocateInfo,
-                                               command_pool.command_buffers.data())) {
-      throw std::runtime_error("Failed to allocate command buffers");
-    }
-
-    std::cout << "Command buffers creation process ends with success..." << std::endl;
-  }
-
-  void createSyncObjects() {
-    imageAvailableSemaphores.resize(command_pool.MAX_FRAMES_IN_FLIGHT);
-    renderFinishedSemaphores.resize(command_pool.MAX_FRAMES_IN_FLIGHT);
-    inFlightFences.resize(command_pool.MAX_FRAMES_IN_FLIGHT);
-
-    VkSemaphoreCreateInfo semaphoreCreateInfo{};
-    semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-    VkFenceCreateInfo fenceCreateInfo{};
-    fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-    for (size_t i = 0; i < command_pool.MAX_FRAMES_IN_FLIGHT; i++) {
-      if (VK_SUCCESS !=
-              vkCreateSemaphore(devices.logical_device, &semaphoreCreateInfo, nullptr, &imageAvailableSemaphores[i]) ||
-          VK_SUCCESS !=
-              vkCreateSemaphore(devices.logical_device, &semaphoreCreateInfo, nullptr, &renderFinishedSemaphores[i]) ||
-          VK_SUCCESS != vkCreateFence(devices.logical_device, &fenceCreateInfo, nullptr, &inFlightFences[i])) {
-        throw std::runtime_error("Failed to create semaphores or fence");
-      }
-    }
-
-    std::cout << "Sync objects creation process ends with success..." << std::endl;
   }
 
   int rateDeviceSuitability(VkPhysicalDevice input_device) {
@@ -480,7 +349,7 @@ class SmVulkanRendererSystem {
     // This behavior reached by flag = VK_FENCE_CREATE_SIGNALED_BIT.
     vkWaitForFences(devices.logical_device,
                     1,
-                    &inFlightFences[currentFrame],
+                    &in_flight_fences[current_frame_index],
                     VK_TRUE,
                     UINT64_MAX);
 
@@ -489,7 +358,7 @@ class SmVulkanRendererSystem {
         vkAcquireNextImageKHR(devices.logical_device,
                               swap_chain.swap_chain,
                               UINT64_MAX,
-                              imageAvailableSemaphores[currentFrame],
+                              image_available_semaphores[current_frame_index],
                               VK_NULL_HANDLE,
                               &imageIndex);
     if (VK_ERROR_OUT_OF_DATE_KHR == acquireImageResult) {
@@ -501,16 +370,16 @@ class SmVulkanRendererSystem {
 
     vkResetFences(devices.logical_device,
                   1,
-                  &inFlightFences[currentFrame]);  // Only reset the fence if we are submitting work
+                  &in_flight_fences[current_frame_index]);  // Only reset the fence if we are submitting work
 
-    vkResetCommandBuffer(command_pool.command_buffers[currentFrame], 0);
-    recordCommandBuffer(command_pool.command_buffers[currentFrame], imageIndex);
+    vkResetCommandBuffer(command_pool.command_buffers[current_frame_index], 0);
+    recordCommandBuffer(command_pool.command_buffers[current_frame_index], imageIndex);
 
-    VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
-    VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
+    VkSemaphore waitSemaphores[] = {image_available_semaphores[current_frame_index]};
+    VkSemaphore signalSemaphores[] = {render_finished_semaphores[current_frame_index]};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
-    updateUniformBuffer(currentFrame);
+    updateUniformBuffer(current_frame_index);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -518,14 +387,13 @@ class SmVulkanRendererSystem {
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &command_pool.command_buffers[currentFrame];
+    submitInfo.pCommandBuffers = &command_pool.command_buffers[current_frame_index];
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
     if (VK_SUCCESS != vkQueueSubmit(queues.graphics_queue,
                                     1,
-                                    &submitInfo,
-                                    inFlightFences[currentFrame])) {
+                                    &submitInfo, in_flight_fences[current_frame_index])) {
       throw std::runtime_error("Failed to submit draw command buffer");
     }
 
@@ -544,14 +412,14 @@ class SmVulkanRendererSystem {
     VkResult queuePresentResult = vkQueuePresentKHR(queues.present_queue, &presentInfo);
     if (VK_ERROR_OUT_OF_DATE_KHR == queuePresentResult ||
         VK_SUBOPTIMAL_KHR == queuePresentResult ||
-        framebufferResized) {
-      framebufferResized = false;
+        frame_buffer_resized_flag) {
+      frame_buffer_resized_flag = false;
       recreateSwapChain();
     } else if (VK_SUCCESS != queuePresentResult) {
       throw std::runtime_error("Failed to preset swap chain image");
     }
 
-    currentFrame = (currentFrame + 1) % command_pool.MAX_FRAMES_IN_FLIGHT;
+    current_frame_index = (current_frame_index + 1) % command_pool.MAX_FRAMES_IN_FLIGHT;
   }
 
   void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
