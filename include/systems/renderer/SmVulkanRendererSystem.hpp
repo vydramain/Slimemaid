@@ -55,7 +55,6 @@
 #include "systems/renderer/SmQueueFamiliesSystem.hpp"
 #include "systems/renderer/SmSamplingFlagsSystem.hpp"
 #include "systems/renderer/SmShaderSystem.hpp"
-#include "systems/renderer/SmStencilSystem.hpp"
 #include "systems/renderer/SmSwapChainSystem.hpp"
 #include "systems/renderer/SmTextureImageSystem.hpp"
 #include "systems/renderer/SmVulkanInstanceSystem.hpp"
