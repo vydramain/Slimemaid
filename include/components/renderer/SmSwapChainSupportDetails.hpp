@@ -10,18 +10,17 @@
 ------------------------------------
 */
 
-#ifndef SLIMEMAID_SWAPCHAINSUPPORTDETAILS_HPP
-#define SLIMEMAID_SWAPCHAINSUPPORTDETAILS_HPP
+#ifndef SLIMEMAID_SMSWAPCHAINSUPPORTDETAILS_HPP
+#define SLIMEMAID_SMSWAPCHAINSUPPORTDETAILS_HPP
 
 #include <vector>
 
 #include <vulkan/vulkan.h>
 
-struct SwapChainSupportDetails {
+struct SmSwapChainSupportDetails {
   VkSurfaceCapabilitiesKHR capabilities;
   std::vector<VkSurfaceFormatKHR> formats;
   std::vector<VkPresentModeKHR> present_modes;
 };
 
-#endif // SLIMEMAID_SWAPCHAINSUPPORTDETAILS_HPP
-
+#endif  // SLIMEMAID_SMSWAPCHAINSUPPORTDETAILS_HPP
