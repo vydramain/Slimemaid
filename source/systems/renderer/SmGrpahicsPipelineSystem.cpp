@@ -14,8 +14,8 @@ void create_graphics_pipeline(std::string input_vertex_shader_path,
                               SmDescriptorPool* p_descriptor_pool,
                               SmGraphicsPipeline* p_graphics_pipeline,
                               VkSampleCountFlagBits input_msaa_samples) {
-  auto vert_shader_content = readFile(input_vertex_shader_path);
-  auto frag_shader_code = readFile(input_fragment_shader_path);
+  auto vert_shader_content = read_file(input_vertex_shader_path);
+  auto frag_shader_code = read_file(input_fragment_shader_path);
 
   VkShaderModule vert_shader_module = create_shader_module(input_devices, vert_shader_content);
   VkShaderModule frag_shader_module = create_shader_module(input_devices, frag_shader_code);
