@@ -14,9 +14,6 @@
 #include <unordered_map>
 #include <vector>
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include "tiny_obj_loader.h"
-
 #include "components/renderer/SmModelResources.hpp"
 #include "components/renderer/SmVertex.hpp"
 

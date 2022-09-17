@@ -8,6 +8,9 @@
 
 #include "systems/renderer/SmTextureImageSystem.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 static bool has_stencil_component(VkFormat input_format) {
   return input_format == VK_FORMAT_D32_SFLOAT_S8_UINT ||
          input_format == VK_FORMAT_D24_UNORM_S8_UINT;

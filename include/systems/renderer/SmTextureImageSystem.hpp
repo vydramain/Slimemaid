@@ -17,9 +17,6 @@
 #include <iostream>
 #include <stdexcept>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
 #include "systems/renderer/SmBuffersSystem.hpp"
 #include "systems/renderer/SmCommandsSystem.hpp"
 #include "systems/renderer/SmGraphicsMemorySystem.hpp"

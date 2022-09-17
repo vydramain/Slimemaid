@@ -7,6 +7,9 @@
 
 #include "systems/renderer/SmModelLoaderSystem.hpp"
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tiny_obj_loader.h"
+
 void load_model(SmModelResources* p_model_resources) {
   tinyobj::attrib_t attribute;
   std::vector<tinyobj::shape_t> shapes;
