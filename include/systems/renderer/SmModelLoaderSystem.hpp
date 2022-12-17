@@ -13,8 +13,8 @@
 
 #include "tiny_obj_loader.h"
 
-const std::string MODEL_PATH = "raws/viking_room/viking_room.obj";
-const std::string TEXTURE_PATH = "raws/viking_room/viking_room.png";
+const std::string MODEL_PATH = "raws/slime_green/slime_green.obj";
+const std::string TEXTURE_PATH = "raws/slime_green/textures/Cialo_Base_Color_1001.png";
 
 void loadModel(SmModelResources* p_model_resources) {
   tinyobj::attrib_t attribute;
