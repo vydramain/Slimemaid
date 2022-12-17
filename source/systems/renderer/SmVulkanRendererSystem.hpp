@@ -39,26 +39,6 @@
 #include <stdexcept>
 #include <vector>
 
-#include "systems/debug/SmDebugSystem.hpp"
-
-#include "systems/renderer/SmBuffersSystem.hpp"
-#include "systems/renderer/SmCommandsSystem.hpp"
-#include "systems/renderer/SmDepthBuffersSystem.hpp"
-#include "systems/renderer/SmDescriptorsSystem.hpp"
-#include "systems/renderer/SmDeviceSystem.hpp"
-#include "systems/renderer/SmFrameBufferSystem.hpp"
-#include "systems/renderer/SmGLFWWindowSystem.hpp"
-#include "systems/renderer/SmGraphicsMemorySystem.hpp"
-#include "systems/renderer/SmGraphicsPipelineSystem.hpp"
-#include "systems/renderer/SmImageViewSystem.hpp"
-#include "systems/renderer/SmModelLoaderSystem.hpp"
-#include "systems/renderer/SmQueueFamiliesSystem.hpp"
-#include "systems/renderer/SmSamplingFlagsSystem.hpp"
-#include "systems/renderer/SmShaderSystem.hpp"
-#include "systems/renderer/SmSwapChainSystem.hpp"
-#include "systems/renderer/SmTextureImageSystem.hpp"
-#include "systems/renderer/SmVulkanInstanceSystem.hpp"
-
 #include "components/renderer/SmColorImage.hpp"
 #include "components/renderer/SmCommandPool.hpp"
 #include "components/renderer/SmDepthBuffers.hpp"
@@ -77,6 +57,24 @@
 #include "components/renderer/SmUniformBufferObject.hpp"
 #include "components/renderer/SmUniformBuffers.hpp"
 #include "components/renderer/SmVulkanInstance.hpp"
+
+#include "systems/renderer/SmBuffersSystem.hpp"
+#include "systems/renderer/SmCommandsSystem.hpp"
+#include "systems/renderer/SmDepthBuffersSystem.hpp"
+#include "systems/renderer/SmDescriptorsSystem.hpp"
+#include "systems/renderer/SmDeviceSystem.hpp"
+#include "systems/renderer/SmFrameBufferSystem.hpp"
+#include "systems/renderer/SmGLFWWindowSystem.hpp"
+#include "systems/renderer/SmGraphicsMemorySystem.hpp"
+#include "systems/renderer/SmGraphicsPipelineSystem.hpp"
+#include "systems/renderer/SmImageViewSystem.hpp"
+#include "systems/renderer/SmModelLoaderSystem.hpp"
+#include "systems/renderer/SmQueueFamiliesSystem.hpp"
+#include "systems/renderer/SmSamplingFlagsSystem.hpp"
+#include "systems/renderer/SmShaderSystem.hpp"
+#include "systems/renderer/SmSwapChainSystem.hpp"
+#include "systems/renderer/SmTextureImageSystem.hpp"
+#include "systems/renderer/SmVulkanInstanceSystem.hpp"
 
 const std::string VERTEX_SHADERS_PATH = "./shaders/vert.spv";
 const std::string FRAGMENT_SHADERS_PATH = "./shaders/frag.spv";

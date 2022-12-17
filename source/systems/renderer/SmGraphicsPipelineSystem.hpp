@@ -21,7 +21,9 @@
 #include "components/renderer/SmSamplingFlags.hpp"
 #include "components/renderer/SmSwapChain.hpp"
 #include "components/renderer/SmVertex.hpp"
+
 #include "systems/reader/SmFileReaderSystem.hpp"
+
 #include "systems/renderer/SmDepthBuffersSystem.hpp"
 #include "systems/renderer/SmShaderSystem.hpp"
 
