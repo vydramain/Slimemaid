@@ -10,7 +10,7 @@
 
 template<typename T>
 std::shared_ptr<T> SystemManagerSystem::register_system() {
-  const char* type_name = typeid(T).name();
+  const char* type_name = typeid(T).name();                          
 
   assert(m_systems.find(type_name) == m_systems.end() && "Registering system more than once.");
 
