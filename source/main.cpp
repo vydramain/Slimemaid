@@ -12,7 +12,6 @@
 #include <glm/gtx/hash.hpp>
 
 #define TINYOBJLOADER_IMPLEMENTATION
-#include <algorithm>  // Necessary for std::clamp
 #include <array>
 #include <cassert>
 #include <chrono>
@@ -20,12 +19,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
 #include <iostream>
-#include <limits>  // Necessary for std::numeric_limits
-#include <map>
-#include <optional>
-#include <set>
 #include <stdexcept>
 #include <vector>
 
@@ -37,17 +31,14 @@
 #include "components/renderer/SmFrame.hpp"
 #include "components/renderer/SmGLFWWindow.hpp"
 #include "components/renderer/SmModelResources.hpp"
-#include "components/renderer/SmQueueFamilyIndices.hpp"
 #include "components/renderer/SmQueues.hpp"
 #include "components/renderer/SmSamplingFlags.hpp"
 #include "components/renderer/SmSurface.hpp"
 #include "components/renderer/SmSwapChain.hpp"
-#include "components/renderer/SmSwapChainSupportDetails.hpp"
 #include "components/renderer/SmTextureImage.hpp"
 #include "components/renderer/SmTextureImageViewSampler.hpp"
 #include "components/renderer/SmUniformBufferObject.hpp"
 #include "components/renderer/SmUniformBuffers.hpp"
-#include "components/renderer/SmVertex.hpp"
 #include "components/renderer/SmVulkanInstance.hpp"
 #include "systems/debug/SmDebugSystem.hpp"
 #include "systems/renderer/SmBuffersSystem.hpp"

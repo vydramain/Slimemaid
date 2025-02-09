@@ -34,6 +34,7 @@ The most important components you'll need for developing Vulkan applications on 
 
 Command-line utilities, most importantly vulkaninfo and vkcube. Run these to confirm your machine supports Vulkan.
 
+sameforarch
 ```console
 # sudo apt install vulkan-tools
 ```
@@ -65,6 +66,7 @@ or
 #### GLFW
 We'll be installing [GLFW](https://www.glfw.org/) from the following command:
 
+sameforarch
 ```console
 # sudo apt install libglfw3-dev
 ```
@@ -78,6 +80,7 @@ Vulkan does not include a library for linear algebra operations, so we'll have t
 
 It is a header-only library that can be installed from the libglm-dev or glm-devel package:
 
+sameforarch
 ```console
 # sudo apt install libglm-dev
 ```
