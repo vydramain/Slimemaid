@@ -32,47 +32,68 @@ List of dependencies:
 #### Vulkan packages
 The most important components you'll need for developing Vulkan applications on Linux are the Vulkan loader, validation layers, and a couple of command-line utilities to test whether your machine is Vulkan-capable:
 
+##### Vulkan tools
 Command-line utilities, most importantly vulkaninfo and vkcube. Run these to confirm your machine supports Vulkan.
 
-sameforarch
+If you use apt package manager:
 ```console
-# sudo apt install vulkan-tools
-```
-or
-```console
-# sudo dnf install vulkan-tools
+sudo apt install vulkan-tools
 ```
 
+If you use dnf package manager:
+```console
+sudo dnf install vulkan-tools
+```
+
+If you use yay wrapper:
+```console
+yay vulkan-tools
+```
+
+##### Vulkan library for develop
 Installs Vulkan loader. The loader looks up the functions in the driver at runtime, similarly to GLEW for OpenGL - if you're familiar with that.
 
+If you use apt package manager:
 ```console
-# sudo apt install libvulkan-dev
-```
-or
-```console
-# sudo dnf install vulkan-loader-devel
+sudo apt install libvulkan-dev
 ```
 
+If you use dnf package manager:
+```console
+sudo dnf install vulkan-loader-devel
+```
+
+
+##### SPIR-V
 Installs the standard validation layers and required SPIR-V tools. These are crucial when debugging Vulkan applications, and we'll discuss them in the upcoming chapter.
 
+If you use apt package manager:
 ```console    
-# sudo apt install vulkan-validationlayers-dev spirv-tools
+sudo apt install vulkan-validationlayers-dev spirv-tools
 ```
-or
+
+If you use dnf package manager:
 ```console    
-# sudo dnf install mesa-vulkan-devel vulkan-validation-layers-devel
+sudo dnf install mesa-vulkan-devel vulkan-validation-layers-devel
 ```
 
 #### GLFW
+
 We'll be installing [GLFW](https://www.glfw.org/) from the following command:
 
-sameforarch
+If you use apt package manager:
 ```console
-# sudo apt install libglfw3-dev
+sudo apt install libglfw3-dev
+
 ```
-or
+If you use dnf package manager:
 ```console
-# sudo dnf install glfw-devel
+sudo dnf install glfw-devel
+```
+
+If you use yay wrapper:
+```console
+yay glfw
 ```
 
 #### GLM
@@ -80,24 +101,33 @@ Vulkan does not include a library for linear algebra operations, so we'll have t
 
 It is a header-only library that can be installed from the libglm-dev or glm-devel package:
 
-sameforarch
+If you use apt package manager:
 ```console
-# sudo apt install libglm-dev
+sudo apt install libglm-dev
 ```
-or
+
+If you use dnf package manager:
 ```console
-# sudo dnf install glm-devel
+sudo dnf install glm-devel
 ```
+
+If you use yay wrapper:
+```console
+yay glm
+```
+
 
 #### SPDLOG
 We use simple, very fast, header-only/compiled, C++ logging library.
 
+If you use apt package manager:
 ```console
-# sudo apt install libspdlog-dev
+sudo apt install libspdlog-dev
 ```
-or
+
+If you use dnf package manager:
 ```console
-# sudo dnf install spdlog
+sudo dnf install spdlog
 ```
 
 #### VulkanSDK
@@ -107,21 +137,21 @@ But if you don't want to use you should change base SDK location variables.
 After downloading use this command to unpack SDK where `x.x.x.x` is version of current SDK and `arc` is architecture of your system:
 
 ```console
-$ tar -zxvf vulkansdk-linux-arc-x.x.x.x.tar.gz
+tar -zxvf vulkansdk-linux-arc-x.x.x.x.tar.gz
 ```
 
 After that move file to correct location:
 
 ```console
-# mv x.x.x.x /opt/vulkansdk/x.x.x.x
+mv x.x.x.x /opt/vulkansdk/x.x.x.x
 ```
 
 And do not forget execute shell file to set up system environment variables:
 
 ```console
-# ch /opt/vulkansdk/x.x.x.x
-# sudo chmod +x setup-env.sh
-# ./setup-env.sh
+ch /opt/vulkansdk/x.x.x.x
+sudo chmod +x setup-env.sh
+./setup-env.sh
 ```
 
 ### Footnote
