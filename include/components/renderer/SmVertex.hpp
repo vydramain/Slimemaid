@@ -18,6 +18,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/hash.hpp>
 
+#include <vulkan/vulkan.h>
+
 struct SmVertex {
   glm::vec3 pos;
   glm::vec3 color;

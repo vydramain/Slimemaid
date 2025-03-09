@@ -63,6 +63,22 @@ If you use dnf package manager:
 sudo dnf install vulkan-loader-devel
 ```
 
+##### Vulkan validation layers
+
+If you use apt package manager:
+```console
+sudo apt install vulkan-validationlayers
+```
+
+If you use dnf package manager:
+```console
+sudo dnf install vulkan-validation-layers
+```
+
+If you use yay wrapper:
+```console
+yay vulkan-validation
+```
 
 ##### SPIR-V
 Installs the standard validation layers and required SPIR-V tools. These are crucial when debugging Vulkan applications, and we'll discuss them in the upcoming chapter.

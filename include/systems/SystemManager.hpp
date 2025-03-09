@@ -11,11 +11,11 @@
 
 #include <cassert>
 #include <memory>
-#include <set>
 #include <unordered_map>
 
 #include "entities/Entity.hpp"
 #include "entities/Signature.hpp"
+
 #include "systems/System.hpp"
 
 class SystemManagerSystem {

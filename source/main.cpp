@@ -23,35 +23,39 @@
 #include <stdexcept>
 #include <vector>
 
+#include "components/renderer/SmFrame.hpp"
+#include "components/renderer/SmQueues.hpp"
+#include "components/renderer/SmDevices.hpp"
+#include "components/renderer/SmSurface.hpp"
+#include "components/renderer/SmSwapChain.hpp"
+#include "components/renderer/SmGLFWWindow.hpp"
 #include "components/renderer/SmColorImage.hpp"
 #include "components/renderer/SmCommandPool.hpp"
 #include "components/renderer/SmDepthBuffers.hpp"
-#include "components/renderer/SmDescriptorPool.hpp"
-#include "components/renderer/SmDevices.hpp"
-#include "components/renderer/SmFrame.hpp"
-#include "components/renderer/SmGLFWWindow.hpp"
-#include "components/renderer/SmModelResources.hpp"
-#include "components/renderer/SmQueues.hpp"
-#include "components/renderer/SmSamplingFlags.hpp"
-#include "components/renderer/SmSurface.hpp"
-#include "components/renderer/SmSwapChain.hpp"
 #include "components/renderer/SmTextureImage.hpp"
-#include "components/renderer/SmTextureImageViewSampler.hpp"
-#include "components/renderer/SmUniformBufferObject.hpp"
+#include "components/renderer/SmSamplingFlags.hpp"
+#include "components/renderer/SmDescriptorPool.hpp"
+#include "components/renderer/SmModelResources.hpp"
 #include "components/renderer/SmUniformBuffers.hpp"
 #include "components/renderer/SmVulkanInstance.hpp"
+#include "components/renderer/SmUniformBufferObject.hpp"
+#include "components/renderer/SmTextureImageViewSampler.hpp"
+
 #include "systems/debug/SmDebugSystem.hpp"
+#include "systems/renderer/SmDeviceSystem.hpp"
 #include "systems/renderer/SmBuffersSystem.hpp"
 #include "systems/renderer/SmCommandsSystem.hpp"
-#include "systems/renderer/SmDepthBuffersSystem.hpp"
-#include "systems/renderer/SmDescriptorsSystem.hpp"
-#include "systems/renderer/SmDeviceSystem.hpp"
-#include "systems/renderer/SmFrameBufferSystem.hpp"
-#include "systems/renderer/SmGraphicsPipelineSystem.hpp"
 #include "systems/renderer/SmImageViewSystem.hpp"
 #include "systems/renderer/SmModelLoaderSystem.hpp"
+#include "systems/renderer/SmDescriptorsSystem.hpp"
+#include "systems/renderer/SmFrameBufferSystem.hpp"
+#include "systems/renderer/SmDepthBuffersSystem.hpp"
 #include "systems/renderer/SmTextureImageSystem.hpp"
 #include "systems/renderer/SmVulkanInstanceSystem.hpp"
+#include "systems/renderer/SmGraphicsPipelineSystem.hpp"
+#include "systems/renderer/SmSwapChainSystem.hpp"
+#include "systems/renderer/SmVulkanInstanceSystem.hpp"
+#include "systems/renderer/SmGLFWWindowSystem.hpp"
 
 const std::string VERTEX_SHADERS_PATH = "./shaders/vert.spv";
 const std::string FRAGMENT_SHADERS_PATH = "./shaders/frag.spv";
@@ -86,6 +90,15 @@ class SmVulkanRendererSystem {
   bool frame_buffer_resized_flag = false;
   uint32_t current_frame_index = 0;
 
+//  #ifdef NDEBUG
+//  const bool enable_validation_layers = false;
+//  #else
+  const bool enable_validation_layers = true;
+//  #endif
+
+  std::vector<const char*> validation_layers = {"VK_LAYER_KHRONOS_validation"};
+  std::vector<const char*> device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
   void initWindow() {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -106,8 +119,10 @@ class SmVulkanRendererSystem {
   }
 
   void initVulkan() {
+    std::cout << "Start initialization of Vulkan instance..." << std::endl;
     create_instance(&instance,
-                    enable_validation_layers);
+                    enable_validation_layers,
+                    &validation_layers);
     setup_debug_messenger(enable_validation_layers,
                           instance,
                           &debugMessenger);
@@ -117,11 +132,14 @@ class SmVulkanRendererSystem {
     pick_physical_device(instance,
                          &msaa_samples,
                          &devices,
-                         surface);
+                         surface,
+                         device_extensions);
     create_logical_device(&devices,
                           surface,
                           &queues,
-                          enable_validation_layers);
+                          enable_validation_layers,
+                          validation_layers,
+                          device_extensions);
     create_swap_chain(devices,
                       surface,
                       window,
@@ -133,7 +151,7 @@ class SmVulkanRendererSystem {
                        &graphics_pipeline,
                        &swap_chain);
     create_descriptor_set_layout(devices, &descriptor_pool);
-    createGraphicsPipeline(VERTEX_SHADERS_PATH,
+    create_graphics_pipeline(VERTEX_SHADERS_PATH,
                            FRAGMENT_SHADERS_PATH,
                            devices,
                            swap_chain,
@@ -143,13 +161,13 @@ class SmVulkanRendererSystem {
     create_command_pool(devices,
                         surface,
                         &command_pool);
-    createDepthResources(devices,
+    create_depth_resources(devices,
                          queues,
                          msaa_samples,
                          &swap_chain,
                          &command_pool,
                          &depth_buffers);
-    createColorResources(devices,
+    create_color_resources(devices,
                          swap_chain,
                          msaa_samples,
                          &color_image);
@@ -171,7 +189,7 @@ class SmVulkanRendererSystem {
     create_texture_sampler(devices,
                            texture_model_resources,
                            &texture_model_resources_read_handler);
-    loadModel(&scene_model_resources);
+    load_model(&scene_model_resources);
     create_vertex_buffer(devices,
                          &command_pool,
                          &queues,
@@ -284,20 +302,20 @@ class SmVulkanRendererSystem {
                        msaa_samples,
                        &graphics_pipeline,
                        &swap_chain);
-    createGraphicsPipeline(VERTEX_SHADERS_PATH,
+    create_graphics_pipeline(VERTEX_SHADERS_PATH,
                            FRAGMENT_SHADERS_PATH,
                            devices,
                            swap_chain,
                            descriptor_pool,
                            graphics_pipeline,
                            msaa_samples.msaa_samples);
-    createDepthResources(devices,
+    create_depth_resources(devices,
                          queues,
                          msaa_samples,
                          &swap_chain,
                          &command_pool,
                          &depth_buffers);
-    createColorResources(devices,
+    create_color_resources(devices,
                          swap_chain,
                          msaa_samples,
                          &color_image);
@@ -352,6 +370,7 @@ class SmVulkanRendererSystem {
                               image_available_semaphores[current_frame_index],
                               VK_NULL_HANDLE,
                               &imageIndex);
+
     if (VK_ERROR_OUT_OF_DATE_KHR == acquireImageResult) {
       recreateSwapChain();
       return;

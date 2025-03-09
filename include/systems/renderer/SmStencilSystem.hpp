@@ -1,5 +1,5 @@
 /*
-------------------------------------
+-----------------------------------
   Slimemaid Source Code (22.05.2022)
   This file is part of Slimemaid Source Code.
 ------------------------------------
@@ -10,7 +10,7 @@
 
 #include <vulkan/vulkan.h>
 
-static bool hasStencilComponent(VkFormat format) {
+inline bool has_stencil_component(VkFormat format) {
   return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
