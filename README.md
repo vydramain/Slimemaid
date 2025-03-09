@@ -80,6 +80,11 @@ If you use yay wrapper:
 yay vulkan-validation
 ```
 
+Additionaly, if you use Steam Deck with SteamOS try:
+```console
+yay libglvnd
+```
+
 ##### SPIR-V
 Installs the standard validation layers and required SPIR-V tools. These are crucial when debugging Vulkan applications, and we'll discuss them in the upcoming chapter.
 
