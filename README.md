@@ -152,7 +152,7 @@ sudo dnf install spdlog
 ```
 
 #### VulkanSDK
-I would recommend you to download [SDK Tarball](https://sdk.lunarg.com/sdk/download/1.3.204.1/linux/vulkansdk-linux-x86_64-1.3.204.1.tar.gz) version. In the project absolute ways used for the compiling. And correct system position is necessary for correct work.
+I would recommend you to download [SDK Tarball](https://vulkan.lunarg.com/sdk/home#linux) version. In the project absolute ways used for the compiling. And correct system position is necessary for correct work.
 But if you don't want to use you should change base SDK location variables.
 
 After downloading use this command to unpack SDK where `x.x.x.x` is version of current SDK and `arc` is architecture of your system:
