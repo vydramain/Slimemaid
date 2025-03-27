@@ -5,7 +5,7 @@
 
 #include "systems/renderer/SmQueueFamiliesSystem.hpp"
 
-VkCommandBuffer begin_single_time_commands(VkDevice input_device,
+VkCommandBuffer sl_begin_single_time_commands(VkDevice input_device,
                                            VkCommandPool input_command_pool) {
   VkCommandBufferAllocateInfo command_buffer_allocate_info{};
   command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -28,7 +28,7 @@ VkCommandBuffer begin_single_time_commands(VkDevice input_device,
   return command_buffer;
 }
 
-void end_single_time_commands(VkDevice input_device,
+void sl_end_single_time_commands(VkDevice input_device,
                               VkCommandPool input_command_pool,
                               VkQueue input_graphics_queue,
                               VkCommandBuffer input_command_buffer) {
@@ -48,7 +48,7 @@ void end_single_time_commands(VkDevice input_device,
                        &input_command_buffer);
 }
 
-void create_command_pool(SmDevices input_devices,
+void sl_create_command_pool(SmDevices input_devices,
                        SmSurface input_surface,
                        SmCommandPool* p_command_pool) {
   SmQueueFamilyIndices queue_family_indices = find_transfer_queue_families(input_devices.physical_device,
@@ -69,7 +69,7 @@ void create_command_pool(SmDevices input_devices,
   std::cout << "Command pool creation process ends with success..." << std::endl;
 }
 
-void create_command_buffers(SmDevices input_devices,
+void sl_create_command_buffers(SmDevices input_devices,
                           SmCommandPool* p_command_pool) {
   p_command_pool->command_buffers.resize(p_command_pool->MAX_FRAMES_IN_FLIGHT);
 
@@ -88,7 +88,7 @@ void create_command_buffers(SmDevices input_devices,
   std::cout << "Command buffers creation process ends with success..." << std::endl;
 }
 
-void createSyncObjects(SmDevices input_devices,
+void sl_create_sync_objects(SmDevices input_devices,
                        SmCommandPool* p_command_pool,
                        std::vector<VkSemaphore>* p_image_available_semaphores,
                        std::vector<VkSemaphore>* p_render_finished_semaphores,

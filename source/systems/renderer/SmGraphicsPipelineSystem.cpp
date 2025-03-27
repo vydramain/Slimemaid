@@ -9,7 +9,7 @@
 #include "systems/renderer/SmDepthBuffersSystem.hpp"
 #include "systems/renderer/SmShaderSystem.hpp"
 
-void create_graphics_pipeline(const std::string& input_vertex_shader_path,
+void sl_create_graphics_pipeline(const std::string& input_vertex_shader_path,
                               const std::string& input_fragment_shader_path, SmDevices& devices,
                               const SmSwapChain& input_swap_chain,
                               SmDescriptorPool& descriptor_pool,
@@ -179,7 +179,7 @@ void create_graphics_pipeline(const std::string& input_vertex_shader_path,
   std::cout << "Graphics pipeline creation process ends with success..." << std::endl;
 }
 
-void create_render_pass(SmDevices input_devices, SmSamplingFlags input_msaa_samples,
+void sl_create_render_pass(SmDevices input_devices, SmSamplingFlags input_msaa_samples,
                         SmGraphicsPipeline* p_graphics_pipeline, SmSwapChain* p_swap_chain) {
   VkAttachmentDescription colorAttachmentDescription{};
   colorAttachmentDescription.format = p_swap_chain->swap_chain_image_format;
@@ -192,7 +192,7 @@ void create_render_pass(SmDevices input_devices, SmSamplingFlags input_msaa_samp
   colorAttachmentDescription.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
   VkAttachmentDescription depthAttachmentDescription{};
-  depthAttachmentDescription.format = find_depth_format(input_devices);
+  depthAttachmentDescription.format = sl_find_depth_format(input_devices);
   depthAttachmentDescription.samples = input_msaa_samples.msaa_samples;
   depthAttachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   depthAttachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;

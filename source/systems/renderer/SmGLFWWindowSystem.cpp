@@ -8,7 +8,7 @@
 #include "components/renderer/SmSurface.hpp"
 
 
-std::vector<const char*> getRequiredExtensions(bool input_enable_validation_layers) {
+std::vector<const char*> sl_get_required_extensions(bool input_enable_validation_layers) {
   uint32_t glfw_extensions_count = 0;
   const char** glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extensions_count);
 
@@ -21,7 +21,7 @@ std::vector<const char*> getRequiredExtensions(bool input_enable_validation_laye
   return extensions;
 }
 
-void create_surface(SmGLFWWindow input_window,
+void sl_create_surface(SmGLFWWindow input_window,
                    SmVulkanInstance input_instance,
                    SmSurface* p_surface) {
   if (VK_SUCCESS != glfwCreateWindowSurface(input_instance.instance,

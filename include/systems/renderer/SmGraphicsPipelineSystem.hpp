@@ -19,14 +19,14 @@
 #include "components/renderer/SmSamplingFlags.hpp"
 #include "components/renderer/SmSwapChain.hpp"
 
-void create_graphics_pipeline(const std::string& input_vertex_shader_path,
+void sl_create_graphics_pipeline(const std::string& input_vertex_shader_path,
                               const std::string& input_fragment_shader_path, SmDevices& devices,
                               const SmSwapChain& input_swap_chain,
                               SmDescriptorPool& descriptor_pool,
                               SmGraphicsPipeline& graphics_pipeline,
                               VkSampleCountFlagBits input_msaa_samples);
 
-void create_render_pass(SmDevices input_devices, SmSamplingFlags input_msaa_samples,
+void sl_create_render_pass(SmDevices input_devices, SmSamplingFlags input_msaa_samples,
                         SmGraphicsPipeline* p_graphics_pipeline, SmSwapChain* p_swap_chain);
 
 #endif  // SLIMEMAID_SMGRAPHICSPIPELINESYSTEM_HPP

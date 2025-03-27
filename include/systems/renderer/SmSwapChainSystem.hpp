@@ -22,7 +22,7 @@
 #include "components/renderer/SmGraphicsPipeline.hpp"
 #include "components/renderer/SmSwapChainSupportDetails.hpp"
 
-void clean_up_swap_chain(SmDevices input_devices,
+void sl_clean_up_swap_chain(SmDevices input_devices,
                          SmColorImage input_color_image,
                          SmDepthBuffers input_depth_buffers,
                          SmGraphicsPipeline input_graphics_pipeline,
@@ -31,19 +31,19 @@ void clean_up_swap_chain(SmDevices input_devices,
 SmSwapChainSupportDetails query_swap_chain_support(VkPhysicalDevice input_device,
                                                    SmSurface input_surface);
 
-VkSurfaceFormatKHR choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR>& available_formats);
+VkSurfaceFormatKHR sl_choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR>& available_formats);
 
-VkPresentModeKHR choose_swap_present_mode(const std::vector<VkPresentModeKHR>& available_present_modes);
+VkPresentModeKHR sl_choose_swap_present_mode(const std::vector<VkPresentModeKHR>& available_present_modes);
 
-VkExtent2D choose_swap_extent(SmGLFWWindow input_window,
+VkExtent2D sl_choose_swap_extent(SmGLFWWindow input_window,
                               const VkSurfaceCapabilitiesKHR& capabilities);
 
-void create_swap_chain(SmDevices input_devices,
+void sl_create_swap_chain(SmDevices input_devices,
                        SmSurface input_surface,
                        SmGLFWWindow input_window,
                        SmSwapChain* swap_chain);
 
-void create_image_views(SmDevices input_devices,
+void sl_create_image_views(SmDevices input_devices,
                         SmSwapChain* p_swap_chain);
 
 #endif  // SLIMEMAID_SMSWAPCHAINSYSTEM_H

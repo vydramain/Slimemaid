@@ -28,13 +28,13 @@ bool check_device_graphics_queue_support(SmDevices devices) {
   return false;  // No queue family supports graphics
 }
 
-void create_color_resources(SmDevices input_devices,
+void sl_create_color_resources(SmDevices input_devices,
                             SmSwapChain input_swap_chain,
                             SmSamplingFlags input_msaa_samples,
                             SmColorImage* p_color_image) {
   VkFormat colorFormat = input_swap_chain.swap_chain_image_format;
 
-  create_image(input_devices, input_swap_chain.swap_chain_extent.width,
+  sl_create_image(input_devices, input_swap_chain.swap_chain_extent.width,
                input_swap_chain.swap_chain_extent.height, 1,
                input_msaa_samples.msaa_samples, colorFormat,
                VK_IMAGE_TILING_OPTIMAL,
@@ -43,14 +43,14 @@ void create_color_resources(SmDevices input_devices,
                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, p_color_image->color_image,
                p_color_image->color_image_memory);
   p_color_image->color_image_view =
-      create_image_view(input_devices, p_color_image->color_image, colorFormat,
+      sl_create_image_view(input_devices, p_color_image->color_image, colorFormat,
                         VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
   std::cout << "Color resources creation processs ends with success..."
             << std::endl;
 }
 
-void create_frame_buffers(SmDevices input_devices,
+void sl_create_frame_buffers(SmDevices input_devices,
                           SmGraphicsPipeline input_graphics_pipeline,
                           SmColorImage input_color_image,
                           SmDepthBuffers input_depth_buffers,

@@ -17,7 +17,7 @@ debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
   return VK_FALSE;
 }
 
-VkResult create_debug_utils_messenger_EXT(VkInstance input_instance,
+VkResult sl_create_debug_utils_messenger_EXT(VkInstance input_instance,
                                           const VkDebugUtilsMessengerCreateInfoEXT* p_create_info,
                                           const VkAllocationCallbacks* p_allocator,
                                           VkDebugUtilsMessengerEXT* p_debug_messenger) {
@@ -30,7 +30,7 @@ VkResult create_debug_utils_messenger_EXT(VkInstance input_instance,
   }
 }
 
-void destroy_debug_utils_messenger_EXT(VkInstance input_instance,
+void sl_destroy_debug_utils_messenger_EXT(VkInstance input_instance,
                                        VkDebugUtilsMessengerEXT input_debug_messenger,
                                        const VkAllocationCallbacks* p_allocator) {
   auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
@@ -40,7 +40,7 @@ void destroy_debug_utils_messenger_EXT(VkInstance input_instance,
   }
 }
 
-bool check_validation_layer_support(std::vector<const char*>* validation_layers) {
+bool sl_check_validation_layer_support(std::vector<const char*>* validation_layers) {
   std::cout << "Check Vulkan global layer properties for validation layer support" << std::endl;
   // Retrieving the number of layer properties available is returned in pPropertyCount
   uint32_t layer_count;
@@ -69,7 +69,7 @@ bool check_validation_layer_support(std::vector<const char*>* validation_layers)
   return true;
 }
 
-void fill_debug_messenger_create_info_EXT(VkDebugUtilsMessengerCreateInfoEXT& create_info) {
+void sl_fill_debug_messenger_create_info_EXT(VkDebugUtilsMessengerCreateInfoEXT& create_info) {
   create_info = {};
   create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
   create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
@@ -82,16 +82,16 @@ void fill_debug_messenger_create_info_EXT(VkDebugUtilsMessengerCreateInfoEXT& cr
   create_info.pUserData = nullptr;  // Optional
 }
 
-void setup_debug_messenger(bool input_enable_validation_layers, SmVulkanInstance input_instance,
+void sl_setup_debug_messenger(bool input_enable_validation_layers, SmVulkanInstance input_instance,
                            VkDebugUtilsMessengerEXT* p_debug_messenger) {
   std::cout << "Enable validation layers flag is: " << input_enable_validation_layers << std::endl;
 
   if (!input_enable_validation_layers) return;
 
   VkDebugUtilsMessengerCreateInfoEXT create_info;
-  fill_debug_messenger_create_info_EXT(create_info);
+  sl_fill_debug_messenger_create_info_EXT(create_info);
 
-  if (VK_SUCCESS != create_debug_utils_messenger_EXT(input_instance.instance, &create_info, nullptr,
+  if (VK_SUCCESS != sl_create_debug_utils_messenger_EXT(input_instance.instance, &create_info, nullptr,
                                                      p_debug_messenger)) {
     throw std::runtime_error("Failed to set up debug messenger");
   }

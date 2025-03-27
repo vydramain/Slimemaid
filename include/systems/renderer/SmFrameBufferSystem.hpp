@@ -18,12 +18,12 @@
 #include "components/renderer/SmSamplingFlags.hpp"
 #include "components/renderer/SmGraphicsPipeline.hpp"
 
-void create_color_resources(SmDevices input_devices,
+void sl_create_color_resources(SmDevices input_devices,
                           SmSwapChain input_swap_chain,
                           SmSamplingFlags input_msaa_samples,
                           SmColorImage* p_color_image);
 
-void create_frame_buffers(SmDevices input_devices,
+void sl_create_frame_buffers(SmDevices input_devices,
                           SmGraphicsPipeline input_graphics_pipeline,
                           SmColorImage input_color_image,
                           SmDepthBuffers input_depth_buffers,

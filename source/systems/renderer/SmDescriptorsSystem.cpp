@@ -12,7 +12,7 @@
 #include "components/renderer/SmUniformBuffers.hpp"
 #include "components/renderer/SmUniformBufferObject.hpp"
 
-void create_descriptor_set_layout(SmDevices input_devices,
+void sl_create_descriptor_set_layout(SmDevices input_devices,
                                   SmDescriptorPool* p_descriptor_pool) {
   VkDescriptorSetLayoutBinding ubo_layout_binding{};
   ubo_layout_binding.binding = 0;
@@ -44,7 +44,7 @@ void create_descriptor_set_layout(SmDevices input_devices,
   std::cout << "Set layout process description creation ends with success..." << std::endl;
 }
 
-void create_descriptor_pool(SmDevices input_devices,
+void sl_create_descriptor_pool(SmDevices input_devices,
                             SmCommandPool* p_command_pool,
                             SmDescriptorPool* p_descriptor_pool) {
   std::array<VkDescriptorPoolSize, 2> descriptor_pool_sizes{};
@@ -69,7 +69,7 @@ void create_descriptor_pool(SmDevices input_devices,
   std::cout << "Description pool creation process ends with success..." << std::endl;
 }
 
-void create_descriptor_sets(SmDevices input_devices,
+void sl_create_descriptor_sets(SmDevices input_devices,
                             SmTextureImageViewSampler input_texture_model_resources_read_handler,
                             SmUniformBuffers* p_uniform_buffers,
                             SmCommandPool* p_command_pool,

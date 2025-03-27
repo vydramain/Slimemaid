@@ -29,20 +29,20 @@ behavior.
 #include <components/renderer/SmVulkanInstance.hpp>
 #include <vector>
 
-VkResult create_debug_utils_messenger_EXT(VkInstance input_instance,
+VkResult sl_create_debug_utils_messenger_EXT(VkInstance input_instance,
                                           const VkDebugUtilsMessengerCreateInfoEXT* p_create_info,
                                           const VkAllocationCallbacks* p_allocator,
                                           VkDebugUtilsMessengerEXT* p_debug_messenger);
 
-void destroy_debug_utils_messenger_EXT(VkInstance input_instance,
+void sl_destroy_debug_utils_messenger_EXT(VkInstance input_instance,
                                        VkDebugUtilsMessengerEXT input_debug_messenger,
                                        const VkAllocationCallbacks* p_allocator);
 
-bool check_validation_layer_support(std::vector<const char*>* validation_layers);
+bool sl_check_validation_layer_support(std::vector<const char*>* validation_layers);
 
-void fill_debug_messenger_create_info_EXT(VkDebugUtilsMessengerCreateInfoEXT& create_info);
+void sl_fill_debug_messenger_create_info_EXT(VkDebugUtilsMessengerCreateInfoEXT& create_info);
 
-void setup_debug_messenger(bool input_enable_validation_layers, SmVulkanInstance input_instance,
+void sl_setup_debug_messenger(bool input_enable_validation_layers, SmVulkanInstance input_instance,
                            VkDebugUtilsMessengerEXT* p_debug_messenger);
 
 #endif  // SLIMEMAID_SMDEBUGSYSTEM_H

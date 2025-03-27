@@ -12,7 +12,7 @@
 #include "systems/renderer/SmModelLoaderSystem.hpp"
 #include "systems/renderer/SmGrahicsMemorySystem.hpp"
 
-void generate_mipmaps(uint32_t input_texture_width,
+void sl_generate_mipmaps(uint32_t input_texture_width,
                       uint32_t input_texture_height,
                       uint32_t input_mip_levels,
                       VkImage input_image,
@@ -29,7 +29,7 @@ void generate_mipmaps(uint32_t input_texture_width,
     throw std::runtime_error("Texture image format does not support linear blitting");
   }
 
-  VkCommandBuffer command_buffer = begin_single_time_commands(devices.logical_device, command_pool);
+  VkCommandBuffer command_buffer = sl_begin_single_time_commands(devices.logical_device, command_pool);
 
   VkImageMemoryBarrier barrier{};
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -127,10 +127,10 @@ void generate_mipmaps(uint32_t input_texture_width,
                        1,
                        &barrier);
 
-  end_single_time_commands(devices.logical_device, command_pool, graphics_queue, command_buffer);
+  sl_end_single_time_commands(devices.logical_device, command_pool, graphics_queue, command_buffer);
 }
 
-void create_image(SmDevices input_devices,
+void sl_create_image(SmDevices input_devices,
                   uint32_t input_width,
                   uint32_t input_height,
                   uint32_t input_mip_levels,
@@ -178,7 +178,7 @@ void create_image(SmDevices input_devices,
   vkBindImageMemory(input_devices.logical_device, image, image_memory, 0);
 }
 
-void transition_image_layout(SmDevices& devices,
+void sl_transition_image_layout(SmDevices& devices,
                              VkCommandPool input_command_pool,
                              VkQueue input_graphics_queue,
                              VkImage input_image,
@@ -186,7 +186,7 @@ void transition_image_layout(SmDevices& devices,
                              VkImageLayout input_old_image_layout,
                              VkImageLayout input_new_image_layout,
                              uint32_t input_mip_levels) {
-  VkCommandBuffer command_buffer = begin_single_time_commands(devices.logical_device, input_command_pool);
+  VkCommandBuffer command_buffer = sl_begin_single_time_commands(devices.logical_device, input_command_pool);
 
   VkImageMemoryBarrier image_memory_barrier{};
   image_memory_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -249,10 +249,10 @@ void transition_image_layout(SmDevices& devices,
                        1,
                        &image_memory_barrier);
 
-  end_single_time_commands(devices.logical_device, input_command_pool, input_graphics_queue, command_buffer);
+  sl_end_single_time_commands(devices.logical_device, input_command_pool, input_graphics_queue, command_buffer);
 }
 
-void create_texture_image(SmDevices input_devices,
+void sl_create_texture_image(SmDevices input_devices,
                           VkCommandPool& command_pool,
                           VkQueue& graphics_queue,
                           uint32_t& mip_levels,
@@ -278,7 +278,7 @@ void create_texture_image(SmDevices input_devices,
   VkBuffer staging_buffer;
   VkDeviceMemory staging_buffer_memory;
 
-  create_buffer(input_devices,
+  sl_create_buffer(input_devices,
                 image_size,
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -297,7 +297,7 @@ void create_texture_image(SmDevices input_devices,
 
   stbi_image_free(pixels);
 
-  create_image(input_devices,
+  sl_create_image(input_devices,
                texture_width,
                texture_height, mip_levels,
                VK_SAMPLE_COUNT_1_BIT,
@@ -308,12 +308,12 @@ void create_texture_image(SmDevices input_devices,
                texture_image,
                texture_image_memory);
 
-  transition_image_layout(input_devices, command_pool, graphics_queue,
+  sl_transition_image_layout(input_devices, command_pool, graphics_queue,
                           texture_image,
                           VK_FORMAT_R8G8B8A8_SRGB,
                           VK_IMAGE_LAYOUT_UNDEFINED,
                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mip_levels);
-  copy_buffer_to_image(input_devices, command_pool, graphics_queue,
+  sl_copy_buffer_to_image(input_devices, command_pool, graphics_queue,
                        staging_buffer,
                        texture_image,
                        static_cast<size_t>(texture_width),
@@ -323,7 +323,7 @@ void create_texture_image(SmDevices input_devices,
   vkDestroyBuffer(input_devices.logical_device, staging_buffer, nullptr);
   vkFreeMemory(input_devices.logical_device, staging_buffer_memory, nullptr);
 
-  generate_mipmaps(texture_width,
+  sl_generate_mipmaps(texture_width,
                    texture_height, mip_levels,
                    texture_image,
                    VK_FORMAT_R8G8B8A8_SRGB, command_pool,
@@ -332,7 +332,7 @@ void create_texture_image(SmDevices input_devices,
   std::cout << "Texture image transition process ends with success..." << std::endl;
 }
 
-void create_texture_sampler(SmDevices input_devices,
+void sl_create_texture_sampler(SmDevices input_devices,
                             SmTextureImage input_texture_model_resources,
                             SmTextureImageViewSampler* p_texture_model_resources_read_handler) {
   VkPhysicalDeviceProperties device_properties{};

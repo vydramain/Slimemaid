@@ -9,7 +9,7 @@
 #include "systems/renderer/SmCommandsSystem.hpp"
 #include "systems/renderer/SmGrahicsMemorySystem.hpp"
 
-void create_buffer(SmDevices input_devices,
+void sl_create_buffer(SmDevices input_devices,
                    VkDeviceSize input_size,
                    VkBufferUsageFlags input_usage,
                    VkMemoryPropertyFlags input_memory_properties,
@@ -53,13 +53,13 @@ void create_buffer(SmDevices input_devices,
                      0);
 }
 
-void copy_buffer(SmDevices input_devices,
+void sl_copy_buffer(SmDevices input_devices,
                  SmCommandPool* p_command_pool,
                  SmQueues* p_queues,
                  VkBuffer input_src_buffer,
                  VkBuffer input_dst_buffer,
                  VkDeviceSize input_buffer_size) {
-  VkCommandBuffer command_buffer = begin_single_time_commands(input_devices.logical_device,
+  VkCommandBuffer command_buffer = sl_begin_single_time_commands(input_devices.logical_device,
                                                               p_command_pool->command_pool);
 
   VkBufferCopy copy_region{};
@@ -72,20 +72,20 @@ void copy_buffer(SmDevices input_devices,
                   1,
                   &copy_region);
 
-  end_single_time_commands(input_devices.logical_device,
+  sl_end_single_time_commands(input_devices.logical_device,
                            p_command_pool->command_pool,
                            p_queues->graphics_queue,
                            command_buffer);
 }
 
-void copy_buffer_to_image(SmDevices input_devices,
+void sl_copy_buffer_to_image(SmDevices input_devices,
                           VkCommandPool input_command_pool,
                           VkQueue input_graphics_queue,
                           VkBuffer input_buffer,
                           VkImage input_image,
                           uint32_t input_width,
                           uint32_t input_height) {
-  VkCommandBuffer command_buffer = begin_single_time_commands(input_devices.logical_device, input_command_pool);
+  VkCommandBuffer command_buffer = sl_begin_single_time_commands(input_devices.logical_device, input_command_pool);
 
   VkBufferImageCopy image_region{};
   image_region.bufferOffset = 0;
@@ -105,10 +105,10 @@ void copy_buffer_to_image(SmDevices input_devices,
                          1,
                          &image_region);
 
-  end_single_time_commands(input_devices.logical_device, input_command_pool, input_graphics_queue, command_buffer);
+  sl_end_single_time_commands(input_devices.logical_device, input_command_pool, input_graphics_queue, command_buffer);
 }
 
-void create_vertex_buffer(SmDevices input_devices,
+void sl_create_vertex_buffer(SmDevices input_devices,
                           SmCommandPool* p_command_pool,
                           SmQueues* p_queues,
                           SmModelResources* p_model_resources) {
@@ -116,7 +116,7 @@ void create_vertex_buffer(SmDevices input_devices,
 
   VkBuffer staging_buffer;
   VkDeviceMemory staging_buffer_memory;
-  create_buffer(input_devices,
+  sl_create_buffer(input_devices,
                 buffer_size,
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -136,14 +136,14 @@ void create_vertex_buffer(SmDevices input_devices,
   vkUnmapMemory(input_devices.logical_device,
                 staging_buffer_memory);
 
-  create_buffer(input_devices,
+  sl_create_buffer(input_devices,
                 buffer_size,
                 VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 &p_model_resources->vertex_buffer,
                 &p_model_resources->vertex_buffer_memory);
 
-  copy_buffer(input_devices,
+  sl_copy_buffer(input_devices,
               p_command_pool,
               p_queues,
               staging_buffer,
@@ -156,7 +156,7 @@ void create_vertex_buffer(SmDevices input_devices,
   std::cout << "SmVertex buffer creation process ends with success..." << std::endl;
 }
 
-void create_index_buffer(SmDevices input_devices,
+void sl_create_index_buffer(SmDevices input_devices,
                        SmCommandPool* p_command_pool,
                        SmQueues* p_queues,
                        SmModelResources* p_model_resources) {
@@ -164,7 +164,7 @@ void create_index_buffer(SmDevices input_devices,
 
   VkBuffer staging_buffer;
   VkDeviceMemory staging_buffer_memory;
-  create_buffer(input_devices,
+  sl_create_buffer(input_devices,
                 buffer_size,
                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -184,14 +184,14 @@ void create_index_buffer(SmDevices input_devices,
   vkUnmapMemory(input_devices.logical_device,
                 staging_buffer_memory);
 
-  create_buffer(input_devices,
+  sl_create_buffer(input_devices,
                 buffer_size,
                 VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 &p_model_resources->index_buffer,
                 &p_model_resources->index_buffer_memory);
 
-  copy_buffer(input_devices,
+  sl_copy_buffer(input_devices,
               p_command_pool,
               p_queues,
               staging_buffer,
@@ -204,7 +204,7 @@ void create_index_buffer(SmDevices input_devices,
   std::cout << "Index buffer creation process ends with success..." << std::endl;
 }
 
-void create_uniform_buffers(SmDevices input_devices,
+void sl_create_uniform_buffers(SmDevices input_devices,
                             SmCommandPool* p_command_pool,
                             SmUniformBuffers* p_uniform_buffers) {
   VkDeviceSize buffe_size = sizeof(SmUniformBufferObject);
@@ -213,7 +213,7 @@ void create_uniform_buffers(SmDevices input_devices,
   p_uniform_buffers->uniform_buffers_memory.resize(p_command_pool->MAX_FRAMES_IN_FLIGHT);
 
   for (size_t i = 0; i < p_command_pool->MAX_FRAMES_IN_FLIGHT; i++) {
-    create_buffer(input_devices,
+    sl_create_buffer(input_devices,
                   buffe_size,
                   VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
