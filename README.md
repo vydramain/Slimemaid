@@ -4,7 +4,7 @@ A lightweight game engine and slime simulation built with Vulkan and ECS.
 
 ***
 
-#Overview
+# Overview
 
 Slimemaid is an experimental game engine and slime simulation leveraging the Entity-Component-System (ECS) pattern
 for efficient logic management and a direct Vulkan renderer for high-performance graphics.
