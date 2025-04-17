@@ -1,18 +1,27 @@
 # Slimemaid
 
+A lightweight game engine and slime simulation built with Vulkan and ECS.
+
 ***
 
-# Description
-This is my vision of the game engine and slime imitation.
-I use this example of [ECS pattern](https://austinmorlan.com/posts/entity_component_system/) for engine logic.
-Also, I use direct Vulkan renderer for code [speed?] and [light?].
-This version wrote on Linux and adapted only for this platform. Try it on MacOS and Windows at your own risk.
-Plannig make version for Android.
+#Overview
+
+Slimemaid is an experimental game engine and slime simulation leveraging the Entity-Component-System (ECS) pattern
+for efficient logic management and a direct Vulkan renderer for high-performance graphics.
+This project is designed for Linux systems, with plans for future Android support.
+
+# Features
+
+- ECS Architecture: Modular and scalable game logic inspired by modern engine design.
+- Vulkan Renderer: Fast, low-level graphics rendering for optimal performance.
+- Slime Simulation: Unique physics-based simulation for interactive slime behavior.
+- Open-Source Libraries: Built with GLFW, GLM, spdlog, and more for robust functionality.
 
 # Instuctions
 
-## Install instruction
-List of dependencies:
+## Prerequisites
+
+Before installing, ensure you have the following dependencies:
  - [gcc (GCC) 11.2](https://gcc.gnu.org/gcc-11/)
  - [GNU Make 4.3](https://www.gnu.org/software/make/)
  - [CMake 3.22.2](https://cmake.org/)
@@ -23,16 +32,18 @@ List of dependencies:
  - [stb collection](https://github.com/nothings/stb)
  - [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader)
 
-### Conventions
+## Installation
 
-* `#` means that given Linux command **must be executed with** superuser privileges.
-* `$` means that given Linux command **can be executed without** superuser privileges.
+Follow these steps to set up Slimemaid on your Linux system.
 
 ### Before start
+
 #### Vulkan packages
+
 The most important components you'll need for developing Vulkan applications on Linux are the Vulkan loader, validation layers, and a couple of command-line utilities to test whether your machine is Vulkan-capable:
 
 ##### Vulkan tools
+
 Command-line utilities, most importantly vulkaninfo and vkcube. Run these to confirm your machine supports Vulkan.
 
 If you use apt package manager:
@@ -51,6 +62,7 @@ yay vulkan-tools
 ```
 
 ##### Vulkan library for develop
+
 Installs Vulkan loader. The loader looks up the functions in the driver at runtime, similarly to GLEW for OpenGL - if you're familiar with that.
 
 If you use apt package manager:
@@ -86,6 +98,7 @@ yay libglvnd
 ```
 
 ##### SPIR-V
+
 Installs the standard validation layers and required SPIR-V tools. These are crucial when debugging Vulkan applications, and we'll discuss them in the upcoming chapter.
 
 If you use apt package manager:
@@ -118,6 +131,7 @@ yay glfw
 ```
 
 #### GLM
+
 Vulkan does not include a library for linear algebra operations, so we'll have to download one. GLM is a nice library that is designed for use with graphics APIs and is also commonly used with OpenGL.
 
 It is a header-only library that can be installed from the libglm-dev or glm-devel package:
@@ -139,6 +153,7 @@ yay glm
 
 
 #### SPDLOG
+
 We use simple, very fast, header-only/compiled, C++ logging library.
 
 If you use apt package manager:
@@ -152,6 +167,7 @@ sudo dnf install spdlog
 ```
 
 #### VulkanSDK
+
 I would recommend you to download [SDK Tarball](https://vulkan.lunarg.com/sdk/home#linux) version. In the project absolute ways used for the compiling. And correct system position is necessary for correct work.
 But if you don't want to use you should change base SDK location variables.
 
@@ -175,10 +191,12 @@ sudo chmod +x setup-env.sh
 ./setup-env.sh
 ```
 
-### Footnote
-If you have trouble with compiling and launching project check is your [development environment](https://vulkan-tutorial.com/en/Development_environment#page_Linux) set up.
-Some of this packages for RPM-based distributions can be deprecated or have different names. Check [pkgs.org](https://pkgs.org) or [rpmfind.net](https://rpmfind.net/).
-If you have troubles with finding package you can always compile it for your system and build to [rpm](https://rpm.org/) [package](https://rpm-packaging-guide.github.io/) for installation.
+
+### Troubleshooting
+
+**Compilation Issues**: Ensure your [development environment](https://vulkan-tutorial.com/en/Development_environment#page_Linux) is correctly set up.
+**Package Names**: Some packages may have different names or be deprecated on RPM-based distributions. Check [pkgs.org](https://pkgs.org) or [rpmfind.net](https://rpmfind.net/).
+**Custom Builds**: If a package is unavailable, compile it manually and package it as an [RPM](https://rpm-packaging-guide.github.io/).
 
 # Special info
 Additional information about tasks or some important info about application is [here](./NOTES.md).
