@@ -195,8 +195,13 @@ sudo chmod +x setup-env.sh
 ### Troubleshooting
 
 **Compilation Issues**: Ensure your [development environment](https://vulkan-tutorial.com/en/Development_environment#page_Linux) is correctly set up.
+
+**Vulkan Environment**: If you have issues with setting up your vulkan environment check [getting started](https://vulkan.lunarg.com/doc/sdk/1.4.309.0/linux/getting_started.html).
+
 **Package Names**: Some packages may have different names or be deprecated on RPM-based distributions. Check [pkgs.org](https://pkgs.org) or [rpmfind.net](https://rpmfind.net/).
+
 **Custom Builds**: If a package is unavailable, compile it manually and package it as an [RPM](https://rpm-packaging-guide.github.io/).
+
 
 # Special info
 Additional information about tasks or some important info about application is [here](./NOTES.md).
