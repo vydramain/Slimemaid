@@ -18,7 +18,7 @@
 #include "systems/renderer/SmQueueFamiliesSystem.hpp"
 #include "systems/renderer/SmSamplingFlagsSystem.hpp"
 
-bool check_device_extension_support(VkPhysicalDevice input_device,
+bool sl_check_device_extension_support(VkPhysicalDevice input_device,
                                     std::vector<const char*>& device_extensions) {
   uint32_t extension_count;
   vkEnumerateDeviceExtensionProperties(input_device,
@@ -44,7 +44,7 @@ bool is_device_suitable(VkPhysicalDevice input_device,
                         SmSurface input_surface,
                         std::vector<const char*>& device_extensions) {
   SmQueueFamilyIndices tmp_indices = find_transfer_queue_families(input_device, input_surface);
-  bool extensions_supported = check_device_extension_support(input_device, device_extensions);
+  bool extensions_supported = sl_check_device_extension_support(input_device, device_extensions);
   bool swap_chain_adequate = false;
 
   if (extensions_supported) {
@@ -61,7 +61,7 @@ bool is_device_suitable(VkPhysicalDevice input_device,
          supported_features.samplerAnisotropy;
 }
 
-void pick_physical_device(SmVulkanInstance input_instance,
+void sl_pick_physical_device(SmVulkanInstance input_instance,
                           SmSamplingFlags* p_samples_fls,
                           SmDevices* p_devices,
                           SmSurface input_surface,
@@ -99,7 +99,7 @@ void pick_physical_device(SmVulkanInstance input_instance,
             << "Chosen physical device is: " << chosen_device_properties.deviceName << std::endl;
 }
 
-void create_logical_device(SmDevices* devices,
+void sl_create_logical_device(SmDevices* devices,
                            SmSurface input_surface,
                            SmQueues* queues,
                            bool input_enable_validation_layers,

@@ -18,14 +18,14 @@
 #include "components/renderer/SmDepthBuffers.hpp"
 #include "components/renderer/SmSamplingFlags.hpp"
 
-VkFormat find_supported_depth_format(SmDevices input_devices,
+VkFormat sl_find_supported_depth_format(SmDevices input_devices,
                                      const std::vector<VkFormat>& candidates,
                                      VkImageTiling input_tiling,
                                      VkFormatFeatureFlags input_flags);
 
-VkFormat find_depth_format(SmDevices input_devices);
+VkFormat sl_find_depth_format(SmDevices input_devices);
 
-void create_depth_resources(SmDevices input_devices,
+void sl_create_depth_resources(SmDevices input_devices,
                           SmQueues input_queues,
                           SmSamplingFlags input_msaa_samples,
                           SmSwapChain* p_swap_chain,

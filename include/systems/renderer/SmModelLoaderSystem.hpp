@@ -19,6 +19,6 @@ const std::string TEXTURE_PATH = "raws/viking_room/viking_room.png";
 // const std::string MODEL_PATH = "raws/toilet/source/tub.obj";
 // const std::string TEXTURE_PATH = "raws/toilet/textures/Default_Base_color.png";
 
-void load_model(SmModelResources* p_model_resources);
+void sl_load_model(SmModelResources* p_model_resources);
 
 #endif  // SLIMEMAID_MODELLOADER_HPP

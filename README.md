@@ -83,7 +83,7 @@ sudo apt install libvulkan-dev
 If you use dnf package manager:
 
 ```console
-sudo dnf install vulkan-loader-devel
+sudo dnf install vulkan-loader vulkan-loader-devel
 ```
 
 ##### Vulkan validation layers
@@ -110,6 +110,23 @@ Additionaly, if you use Steam Deck with SteamOS try:
 
 ```console
 yay libglvnd
+```
+
+##### LunarG additional useful platform independent layers
+
+If you use apt package manager:
+```console
+sudo apt install libvulkan1
+```
+
+If you use dnf package manager:
+```console
+sudo dnf install vulkan-devel
+```
+
+If you use yay wrapper:
+```console
+yay vulkan-extra-layers
 ```
 
 ##### VulkanSDK

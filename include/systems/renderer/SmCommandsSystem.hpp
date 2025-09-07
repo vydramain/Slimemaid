@@ -14,22 +14,22 @@
 #include "components/renderer/SmSurface.hpp"
 #include "components/renderer/SmCommandPool.hpp"
 
-VkCommandBuffer begin_single_time_commands(VkDevice input_device,
+VkCommandBuffer sl_begin_single_time_commands(VkDevice input_device,
                                            VkCommandPool input_command_pool);
 
-void end_single_time_commands(VkDevice input_device,
+void sl_end_single_time_commands(VkDevice input_device,
                               VkCommandPool input_command_pool,
                               VkQueue input_graphics_queue,
                               VkCommandBuffer input_command_buffer);
 
-void create_command_pool(SmDevices input_devices,
+void sl_create_command_pool(SmDevices input_devices,
                        SmSurface input_surface,
                        SmCommandPool* p_command_pool);
 
-void create_command_buffers(SmDevices input_devices,
+void sl_create_command_buffers(SmDevices input_devices,
                           SmCommandPool* p_command_pool);
 
-void createSyncObjects(SmDevices input_devices,
+void sl_create_sync_objects(SmDevices input_devices,
                        SmCommandPool* p_command_pool,
                        std::vector<VkSemaphore>* p_image_available_semaphores,
                        std::vector<VkSemaphore>* p_render_finished_semaphores,

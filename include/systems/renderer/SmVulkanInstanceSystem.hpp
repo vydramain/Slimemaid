@@ -15,7 +15,7 @@
 
 #include "components/renderer/SmVulkanInstance.hpp"
 
-void create_instance(SmVulkanInstance* p_instance,
+void sl_create_instance(SmVulkanInstance* p_instance,
                     const bool input_enable_validation_layers,
                     std::vector<const char*>* validation_layers);
 

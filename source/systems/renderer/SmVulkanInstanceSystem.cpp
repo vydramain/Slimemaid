@@ -9,14 +9,14 @@
 #include "systems/debug/SmDebugSystem.hpp"
 #include "systems/renderer/SmGLFWWindowSystem.hpp"
 
-void create_instance(SmVulkanInstance* p_instance,
+void sl_create_instance(SmVulkanInstance* p_instance,
                     const bool input_enable_validation_layers,
                     std::vector<const char*>* validation_layers) {
   if (!input_enable_validation_layers) {
     throw std::runtime_error("Validation layer are not enabled. Instance can't be created...");
   }
 
-  if (!check_validation_layer_support(validation_layers)) {
+  if (!sl_check_validation_layer_support(validation_layers)) {
     throw std::runtime_error("Validation layers requested, but not avaliable. Instance can't be created...");
   }
 
@@ -32,7 +32,7 @@ void create_instance(SmVulkanInstance* p_instance,
   instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   instance_create_info.pApplicationInfo = &app_info;
 
-  auto glfwExtensions = getRequiredExtensions(input_enable_validation_layers);
+  auto glfwExtensions = sl_get_required_extensions(input_enable_validation_layers);
   instance_create_info.enabledExtensionCount = static_cast<uint32_t>(glfwExtensions.size());
   instance_create_info.ppEnabledExtensionNames = glfwExtensions.data();
 
@@ -41,7 +41,7 @@ void create_instance(SmVulkanInstance* p_instance,
     instance_create_info.enabledLayerCount = static_cast<uint32_t>(validation_layers->size());
     instance_create_info.ppEnabledLayerNames = validation_layers->data();
 
-    fill_debug_messenger_create_info_EXT(debug_create_info);
+    sl_fill_debug_messenger_create_info_EXT(debug_create_info);
     instance_create_info.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debug_create_info;
   } else {
     instance_create_info.enabledLayerCount = 0;

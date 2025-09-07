@@ -3,7 +3,7 @@
 
 #include "systems/renderer/SmImageViewSystem.hpp"
 
-VkImageView create_image_view(SmDevices devices,
+VkImageView sl_create_image_view(SmDevices devices,
                             VkImage input_image,
                             VkFormat input_format,
                             VkImageAspectFlags input_aspect_mask,
@@ -30,11 +30,11 @@ VkImageView create_image_view(SmDevices devices,
   return image_view;
 }
 
-void createTextureImageView(SmDevices devices,
+void sl_create_texture_image_view(SmDevices devices,
                             SmTextureImage input_texture_image,
                             SmTextureImageViewSampler& texture_image_view_sampler,
                             uint32_t input_mip_levels) {
-  texture_image_view_sampler.texture_image_view = create_image_view(
+  texture_image_view_sampler.texture_image_view = sl_create_image_view(
       devices, input_texture_image.texture_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, input_mip_levels);
 
   std::cout << "Filling texture image view process ends with success..." << std::endl;

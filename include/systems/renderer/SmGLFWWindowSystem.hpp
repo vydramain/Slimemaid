@@ -22,9 +22,9 @@
 #include "components/renderer/SmVulkanInstance.hpp"
 #include "components/renderer/SmSurface.hpp"
 
-std::vector<const char*> getRequiredExtensions(bool input_enable_validation_layers);
+std::vector<const char*> sl_get_required_extensions(bool input_enable_validation_layers);
 
-void create_surface(SmGLFWWindow input_window,
+void sl_create_surface(SmGLFWWindow input_window,
                    SmVulkanInstance input_instance,
                    SmSurface* p_surface);
 

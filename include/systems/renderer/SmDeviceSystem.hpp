@@ -23,20 +23,20 @@
 #include "components/renderer/SmVulkanInstance.hpp"
 #include "components/renderer/SmQueues.hpp"
 
-bool check_device_extension_support(VkPhysicalDevice input_device,
+bool sl_check_device_extension_support(VkPhysicalDevice input_device,
                                     std::vector<const char*>& device_extensions);
 
-bool is_device_suitable(VkPhysicalDevice input_device,
+bool sl_is_device_suitable(VkPhysicalDevice input_device,
                         SmSurface input_surface,
                         std::vector<const char*>& device_extensions);
 
-void pick_physical_device(SmVulkanInstance input_instance,
+void sl_pick_physical_device(SmVulkanInstance input_instance,
                           SmSamplingFlags* p_samples_fls,
                           SmDevices* p_devices,
                           SmSurface input_surface,
                           std::vector<const char*>& device_extensions);
 
-void create_logical_device(SmDevices* devices,
+void sl_create_logical_device(SmDevices* devices,
                            SmSurface input_surface,
                            SmQueues* queues,
                            bool input_enable_validation_layers,

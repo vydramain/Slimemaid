@@ -9,7 +9,7 @@
 #include "systems/renderer/SmGLFWWindowSystem.hpp"
 #include "systems/renderer/SmQueueFamiliesSystem.hpp"
 
-void clean_up_swap_chain(SmDevices input_devices,
+void sl_clean_up_swap_chain(SmDevices input_devices,
                          SmColorImage input_color_image,
                          SmDepthBuffers input_depth_buffers,
                          SmGraphicsPipeline input_graphics_pipeline,
@@ -76,7 +76,7 @@ SmSwapChainSupportDetails query_swap_chain_support(VkPhysicalDevice input_device
   return details;
 }
 
-VkSurfaceFormatKHR choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR>& available_formats) {
+VkSurfaceFormatKHR sl_choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR>& available_formats) {
   for (const auto& available_format : available_formats) {
     if (VK_FORMAT_B8G8R8A8_SRGB == available_format.format &&
         VK_COLORSPACE_SRGB_NONLINEAR_KHR == available_format.colorSpace) {
@@ -86,7 +86,7 @@ VkSurfaceFormatKHR choose_swap_surface_format(const std::vector<VkSurfaceFormatK
   return available_formats[0];
 }
 
-VkPresentModeKHR choose_swap_present_mode(const std::vector<VkPresentModeKHR>& available_present_modes) {
+VkPresentModeKHR sl_choose_swap_present_mode(const std::vector<VkPresentModeKHR>& available_present_modes) {
   for (const auto& available_present_mode : available_present_modes) {
     if (VK_PRESENT_MODE_MAILBOX_KHR == available_present_mode) {
       return available_present_mode;
@@ -96,7 +96,7 @@ VkPresentModeKHR choose_swap_present_mode(const std::vector<VkPresentModeKHR>& a
   return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D choose_swap_extent(SmGLFWWindow input_window,
+VkExtent2D sl_choose_swap_extent(SmGLFWWindow input_window,
                               const VkSurfaceCapabilitiesKHR& capabilities) {
   if (std::numeric_limits<uint32_t>::max() != capabilities.currentExtent.width) {
     return capabilities.currentExtent;
@@ -118,16 +118,16 @@ VkExtent2D choose_swap_extent(SmGLFWWindow input_window,
   }
 }
 
-void create_swap_chain(SmDevices input_devices,
+void sl_create_swap_chain(SmDevices input_devices,
                        SmSurface input_surface,
                        SmGLFWWindow input_window,
                        SmSwapChain* swap_chain) {
   SmSwapChainSupportDetails swap_chain_support = query_swap_chain_support(input_devices.physical_device,
                                                                           input_surface);
 
-  VkSurfaceFormatKHR surface_format = choose_swap_surface_format(swap_chain_support.formats);
-  VkPresentModeKHR present_mode = choose_swap_present_mode(swap_chain_support.present_modes);
-  VkExtent2D tmp_swap_chain_extent = choose_swap_extent(input_window, swap_chain_support.capabilities);
+  VkSurfaceFormatKHR surface_format = sl_choose_swap_surface_format(swap_chain_support.formats);
+  VkPresentModeKHR present_mode = sl_choose_swap_present_mode(swap_chain_support.present_modes);
+  VkExtent2D tmp_swap_chain_extent = sl_choose_swap_extent(input_window, swap_chain_support.capabilities);
 
   uint32_t image_count = swap_chain_support.capabilities.minImageCount + 1;
   if (swap_chain_support.capabilities.maxImageCount > 0 &&
@@ -187,12 +187,12 @@ void create_swap_chain(SmDevices input_devices,
   std::cout << "Swap chain creation process ends with success..." << std::endl;
 }
 
-void create_image_views(SmDevices input_devices,
+void sl_create_image_views(SmDevices input_devices,
                         SmSwapChain* p_swap_chain) {
   p_swap_chain->swap_chain_image_views.resize(p_swap_chain->swap_chain_images.size());
 
   for (uint32_t i = 0; i < p_swap_chain->swap_chain_images.size(); i++) {
-    p_swap_chain->swap_chain_image_views[i] = create_image_view(input_devices,
+    p_swap_chain->swap_chain_image_views[i] = sl_create_image_view(input_devices,
                                                                 p_swap_chain->swap_chain_images[i],
                                                                 p_swap_chain->swap_chain_image_format,
                                                                 VK_IMAGE_ASPECT_COLOR_BIT,

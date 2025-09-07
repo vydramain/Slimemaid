@@ -17,14 +17,14 @@
 #include "components/renderer/SmTextureImage.hpp"
 #include "components/renderer/SmTextureImageViewSampler.hpp"
 
-VkImageView create_image_view(SmDevices devices,
+VkImageView sl_create_image_view(SmDevices devices,
                             VkImage input_image,
                             VkFormat input_format,
                             VkImageAspectFlags input_aspect_mask,
                             uint32_t input_mip_levels);
 
 
-void createTextureImageView(SmDevices devices,
+void sl_create_texture_image_view(SmDevices devices,
                             SmTextureImage input_texture_image,
                             SmTextureImageViewSampler& texture_image_view_sampler,
                             uint32_t input_mip_levels);

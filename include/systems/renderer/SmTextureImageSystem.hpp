@@ -18,7 +18,7 @@
 #include "components/renderer/SmTextureImage.hpp"
 #include "components/renderer/SmTextureImageViewSampler.hpp"
 
-void generate_mipmaps(uint32_t input_texture_width,
+void sl_generate_mipmaps(uint32_t input_texture_width,
                       uint32_t input_texture_height,
                       uint32_t input_mip_levels,
                       VkImage input_image,
@@ -27,7 +27,7 @@ void generate_mipmaps(uint32_t input_texture_width,
                       VkQueue& graphics_queue,
                       SmDevices& devices);
 
-void create_image(SmDevices input_devices,
+void sl_create_image(SmDevices input_devices,
                   uint32_t input_width,
                   uint32_t input_height,
                   uint32_t input_mip_levels,
@@ -39,7 +39,7 @@ void create_image(SmDevices input_devices,
                   VkImage& image,
                   VkDeviceMemory& image_memory);
 
-void transition_image_layout(SmDevices& devices,
+void sl_transition_image_layout(SmDevices& devices,
                              VkCommandPool input_command_pool,
                              VkQueue input_graphics_queue,
                              VkImage input_image,
@@ -48,14 +48,14 @@ void transition_image_layout(SmDevices& devices,
                              VkImageLayout input_new_image_layout,
                              uint32_t input_mip_levels);
 
-void create_texture_image(SmDevices input_devices,
+void sl_create_texture_image(SmDevices input_devices,
                           VkCommandPool& command_pool,
                           VkQueue& graphics_queue,
                           uint32_t& mip_levels,
                           VkImage& texture_image,
                           VkDeviceMemory& texture_image_memory);
 
-void create_texture_sampler(SmDevices input_devices,
+void sl_create_texture_sampler(SmDevices input_devices,
                             SmTextureImage input_texture_model_resources,
                             SmTextureImageViewSampler* p_texture_model_resources_read_handler);
 

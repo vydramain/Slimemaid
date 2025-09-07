@@ -14,7 +14,6 @@
 
 #include "components/ComponentManager.hpp"
 #include "entities/EntityManager.hpp"
-#include "systems/SystemManager.hpp"
 
 class ECSCombiner {
  public:
